@@ -1,0 +1,37 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: php-admin
+  labels:
+    app: php-admin
+  namespace: stbl-ns  # Add the namespace field here
+spec:
+  selector:
+    matchLabels:
+      app: php-admin
+  strategy:
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 1
+    type: RollingUpdate
+  template:
+    metadata:
+      labels:
+        app: php-admin
+    spec:
+      containers:
+      - image: phpmyadmin/phpmyadmin:5.0.1
+        imagePullPolicy: Always
+        name: phpmyadmin-container
+        env:
+        - name: PMA_HOST
+          value: qa-rds-stbl.ce41pjkxwd2d.ap-southeast-1.rds.amazonaws.com
+        resources:
+            limits:
+              cpu: 500m
+            requests:
+              cpu: 200m    
+        ports:
+        - containerPort:  80
+          name: php-admin-port
+      restartPolicy: Always

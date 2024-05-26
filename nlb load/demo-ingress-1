@@ -1,0 +1,49 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: demo-ingress
+  namespace: default
+  uid: cc3ce3e2-dcd2-4a47-9586-81e6c6ecc282
+  resourceVersion: '2028508'
+  generation: 1
+  creationTimestamp: '2024-01-24T12:42:24Z'
+  annotations:
+    kubectl.kubernetes.io/last-applied-configuration: >
+      {"apiVersion":"networking.k8s.io/v1","kind":"Ingress","metadata":{"annotations":{"kubernetes.io/ingress.class":"nginx","nginx.org/mergeable-ingress-type":"master"},"name":"demo-ingress","namespace":"default"},"spec":{"rules":[{"host":"test.skymarvel.in"}]}}
+    kubernetes.io/ingress.class: nginx
+    nginx.org/mergeable-ingress-type: master
+  managedFields:
+    - manager: kubectl-client-side-apply
+      operation: Update
+      apiVersion: networking.k8s.io/v1
+      time: '2024-01-24T12:42:24Z'
+      fieldsType: FieldsV1
+      fieldsV1:
+        f:metadata:
+          f:annotations:
+            .: {}
+            f:kubectl.kubernetes.io/last-applied-configuration: {}
+            f:kubernetes.io/ingress.class: {}
+            f:nginx.org/mergeable-ingress-type: {}
+        f:spec:
+          f:rules: {}
+    - manager: nginx-ingress
+      operation: Update
+      apiVersion: networking.k8s.io/v1
+      time: '2024-01-24T12:43:39Z'
+      fieldsType: FieldsV1
+      fieldsV1:
+        f:status:
+          f:loadBalancer:
+            f:ingress: {}
+      subresource: status
+  selfLink: /apis/networking.k8s.io/v1/namespaces/default/ingresses/demo-ingress
+status:
+  loadBalancer:
+    ingress:
+      - hostname: >-
+          k8s-default-nginxngi-5c1c733878-be7aeafc37d35da2.elb.ap-south-1.amazonaws.com
+spec:
+  rules:
+    - host: test.skymarvel.in
+

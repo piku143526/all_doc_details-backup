@@ -1,0 +1,73 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: demo-ingress
+  namespace: skymarvel-ns
+  uid: 4c6f203d-7338-4278-b782-42f2a54217cb
+  resourceVersion: '2031079'
+  generation: 1
+  creationTimestamp: '2024-01-24T11:55:50Z'
+  labels:
+    k8slens-edit-resource-version: v1
+  annotations:
+    kubectl.kubernetes.io/last-applied-configuration: >
+      {"apiVersion":"networking.k8s.io/v1","kind":"Ingress","metadata":{"annotations":{"kubernetes.io/ingress.class":"nginx"},"name":"demo-ingress","namespace":"skymarvel-ns"},"spec":{"rules":[{"host":"test.skymarvel.in","http":{"paths":[{"backend":{"service":{"name":"frontend-user","port":{"number":3000}}},"path":"/","pathType":"Prefix"}]}}]}}
+    kubernetes.io/ingress.class: nginx
+    nginx.ingress.kubernetes.io/force-ssl-redirect: 'true'
+    nginx.org/mergeable-ingress-type: minion
+  managedFields:
+    - manager: kubectl-client-side-apply
+      operation: Update
+      apiVersion: networking.k8s.io/v1
+      time: '2024-01-24T11:55:50Z'
+      fieldsType: FieldsV1
+      fieldsV1:
+        f:metadata:
+          f:annotations:
+            .: {}
+            f:kubectl.kubernetes.io/last-applied-configuration: {}
+            f:kubernetes.io/ingress.class: {}
+        f:spec:
+          f:rules: {}
+    - manager: nginx-ingress
+      operation: Update
+      apiVersion: networking.k8s.io/v1
+      time: '2024-01-24T12:13:32Z'
+      fieldsType: FieldsV1
+      fieldsV1:
+        f:status:
+          f:loadBalancer:
+            f:ingress: {}
+      subresource: status
+    - manager: node-fetch
+      operation: Update
+      apiVersion: networking.k8s.io/v1
+      time: '2024-01-24T12:53:35Z'
+      fieldsType: FieldsV1
+      fieldsV1:
+        f:metadata:
+          f:annotations:
+            f:nginx.ingress.kubernetes.io/force-ssl-redirect: {}
+            f:nginx.org/mergeable-ingress-type: {}
+          f:labels:
+            .: {}
+            f:k8slens-edit-resource-version: {}
+  selfLink: /apis/networking.k8s.io/v1/namespaces/skymarvel-ns/ingresses/demo-ingress
+status:
+  loadBalancer:
+    ingress:
+      - hostname: >-
+          k8s-default-nginxngi-5c1c733878-be7aeafc37d35da2.elb.ap-south-1.amazonaws.com
+spec:
+  rules:
+    - host: test.skymarvel.in
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: frontend-user
+                port:
+                  number: 3000
+

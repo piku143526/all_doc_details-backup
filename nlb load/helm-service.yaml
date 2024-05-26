@@ -1,0 +1,148 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: nginx-nginx-ingress-controller
+  namespace: default
+  uid: 1621c329-4da2-4856-aac6-926a7f8951be
+  resourceVersion: '2033412'
+  creationTimestamp: '2024-01-24T12:13:29Z'
+  labels:
+    app.kubernetes.io/instance: nginx
+    app.kubernetes.io/managed-by: Helm
+    app.kubernetes.io/name: nginx-ingress
+    app.kubernetes.io/version: 3.4.2
+    helm.sh/chart: nginx-ingress-1.1.2
+    k8slens-edit-resource-version: v1
+  annotations:
+    kubectl.kubernetes.io/last-applied-configuration: >
+      {"apiVersion":"v1","kind":"Service","metadata":{"annotations":{"meta.helm.sh/release-name":"nginx","meta.helm.sh/release-namespace":"default","service.beta.kubernetes.io/aws-load-balancer-cross-zone-load-balancing-enabled":"true","service.beta.kubernetes.io/aws-load-balancer-eip-allocations":"eipalloc-08aa1094cd444ec06","service.beta.kubernetes.io/aws-load-balancer-nlb-target-type":"ip","service.beta.kubernetes.io/aws-load-balancer-scheme":"internet-facing","service.beta.kubernetes.io/aws-load-balancer-ssl-cert":"arn:aws:acm:ap-south-1:557547717958:certificate/f48794d5-0a46-412c-8e35-12ae012ca01f","service.beta.kubernetes.io/aws-load-balancer-subnets":"subnet-0244b4bd594060922","service.beta.kubernetes.io/aws-load-balancer-type":"external"},"labels":{"app.kubernetes.io/instance":"nginx","app.kubernetes.io/managed-by":"Helm","app.kubernetes.io/name":"nginx-ingress","app.kubernetes.io/version":"3.4.2","helm.sh/chart":"nginx-ingress-1.1.2","k8slens-edit-resource-version":"v1"},"name":"nginx-nginx-ingress-controller","namespace":"default"},"spec":{"ports":[{"name":"http","port":80,"protocol":"TCP","targetPort":80},{"name":"https","port":443,"protocol":"TCP","targetPort":443}],"selector":{"app.kubernetes.io/instance":"nginx","app.kubernetes.io/name":"nginx-ingress"},"type":"LoadBalancer"}}
+    meta.helm.sh/release-name: nginx
+    meta.helm.sh/release-namespace: default
+    service.beta.kubernetes.io/aws-load-balancer-backend-protocol: http
+    service.beta.kubernetes.io/aws-load-balancer-cross-zone-load-balancing-enabled: 'true'
+    service.beta.kubernetes.io/aws-load-balancer-eip-allocations: eipalloc-08aa1094cd444ec06
+    service.beta.kubernetes.io/aws-load-balancer-nlb-target-type: ip
+    service.beta.kubernetes.io/aws-load-balancer-scheme: internet-facing
+    service.beta.kubernetes.io/aws-load-balancer-ssl-cert: >-
+      arn:aws:acm:ap-south-1:557547717958:certificate/f48794d5-0a46-412c-8e35-12ae012ca01f
+    service.beta.kubernetes.io/aws-load-balancer-ssl-ports: https
+    service.beta.kubernetes.io/aws-load-balancer-subnets: subnet-0244b4bd594060922
+    service.beta.kubernetes.io/aws-load-balancer-type: external
+  finalizers:
+    - service.k8s.aws/resources
+  managedFields:
+    - manager: controller
+      operation: Update
+      apiVersion: v1
+      time: '2024-01-24T12:13:29Z'
+      fieldsType: FieldsV1
+      fieldsV1:
+        f:metadata:
+          f:finalizers:
+            .: {}
+            v:"service.k8s.aws/resources": {}
+    - manager: kubectl-client-side-apply
+      operation: Update
+      apiVersion: v1
+      time: '2024-01-24T12:13:29Z'
+      fieldsType: FieldsV1
+      fieldsV1:
+        f:metadata:
+          f:annotations:
+            .: {}
+            f:kubectl.kubernetes.io/last-applied-configuration: {}
+            f:meta.helm.sh/release-name: {}
+            f:meta.helm.sh/release-namespace: {}
+            f:service.beta.kubernetes.io/aws-load-balancer-cross-zone-load-balancing-enabled: {}
+            f:service.beta.kubernetes.io/aws-load-balancer-eip-allocations: {}
+            f:service.beta.kubernetes.io/aws-load-balancer-nlb-target-type: {}
+            f:service.beta.kubernetes.io/aws-load-balancer-scheme: {}
+            f:service.beta.kubernetes.io/aws-load-balancer-ssl-cert: {}
+            f:service.beta.kubernetes.io/aws-load-balancer-subnets: {}
+            f:service.beta.kubernetes.io/aws-load-balancer-type: {}
+          f:labels:
+            .: {}
+            f:app.kubernetes.io/instance: {}
+            f:app.kubernetes.io/managed-by: {}
+            f:app.kubernetes.io/name: {}
+            f:app.kubernetes.io/version: {}
+            f:helm.sh/chart: {}
+            f:k8slens-edit-resource-version: {}
+        f:spec:
+          f:allocateLoadBalancerNodePorts: {}
+          f:externalTrafficPolicy: {}
+          f:internalTrafficPolicy: {}
+          f:ports:
+            .: {}
+            k:{"port":80,"protocol":"TCP"}:
+              .: {}
+              f:name: {}
+              f:port: {}
+              f:protocol: {}
+              f:targetPort: {}
+            k:{"port":443,"protocol":"TCP"}:
+              .: {}
+              f:name: {}
+              f:port: {}
+              f:protocol: {}
+          f:selector: {}
+          f:sessionAffinity: {}
+          f:type: {}
+    - manager: controller
+      operation: Update
+      apiVersion: v1
+      time: '2024-01-24T12:13:32Z'
+      fieldsType: FieldsV1
+      fieldsV1:
+        f:status:
+          f:loadBalancer:
+            f:ingress: {}
+      subresource: status
+    - manager: node-fetch
+      operation: Update
+      apiVersion: v1
+      time: '2024-01-24T13:02:33Z'
+      fieldsType: FieldsV1
+      fieldsV1:
+        f:metadata:
+          f:annotations:
+            f:service.beta.kubernetes.io/aws-load-balancer-backend-protocol: {}
+            f:service.beta.kubernetes.io/aws-load-balancer-ssl-ports: {}
+        f:spec:
+          f:ports:
+            k:{"port":443,"protocol":"TCP"}:
+              f:targetPort: {}
+  selfLink: /api/v1/namespaces/default/services/nginx-nginx-ingress-controller
+status:
+  loadBalancer:
+    ingress:
+      - hostname: >-
+          k8s-default-nginxngi-5c1c733878-be7aeafc37d35da2.elb.ap-south-1.amazonaws.com
+spec:
+  ports:
+    - name: http
+      protocol: TCP
+      port: 80
+      targetPort: 80
+      nodePort: 32518
+    - name: https
+      protocol: TCP
+      port: 443
+      targetPort: 80
+      nodePort: 31228
+  selector:
+    app.kubernetes.io/instance: nginx
+    app.kubernetes.io/name: nginx-ingress
+  clusterIP: 172.20.153.152
+  clusterIPs:
+    - 172.20.153.152
+  type: LoadBalancer
+  sessionAffinity: None
+  externalTrafficPolicy: Cluster
+  ipFamilies:
+    - IPv4
+  ipFamilyPolicy: SingleStack
+  allocateLoadBalancerNodePorts: true
+  loadBalancerClass: service.k8s.aws/nlb
+  internalTrafficPolicy: Cluster
+

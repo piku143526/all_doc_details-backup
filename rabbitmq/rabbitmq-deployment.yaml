@@ -1,0 +1,48 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: rabbitmq
+  namespace: demo-ns
+  labels:
+    app: rabbitmq
+spec:
+  selector:
+    matchLabels:
+      app: rabbitmq
+  strategy:
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 1
+    type: RollingUpdate
+  template:
+    metadata:
+      labels:
+        app: rabbitmq
+    spec:
+      containers:
+      - image: rabbitmq:3.10.10-management
+        imagePullPolicy: Always
+        name: rabbitmq
+        resources:
+          limits:
+            cpu: 500m
+          requests:
+            cpu: 200m
+        ports:
+        - containerPort: 15672
+          name: rabbitmq-port
+        - containerPort: 5672
+          name: rabbitmq-cli
+        volumeMounts:
+        - mountPath: /etc/rabbitmq/
+          name: rabbit-conf
+        - mountPath: /var/lib/rabbitmq
+          name: persistent-storage
+      volumes:
+      - name: rabbit-conf
+        configMap:
+          name: rabbitmq
+      - name: persistent-storage
+        persistentVolumeClaim:
+          claimName: rabbitmq-data
+      restartPolicy: Always

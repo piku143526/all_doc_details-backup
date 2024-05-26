@@ -1,0 +1,98 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: nginx-nginx-ingress-controller
+  namespace: default
+  labels:
+    app.kubernetes.io/instance: nginx
+    app.kubernetes.io/managed-by: Helm
+    app.kubernetes.io/name: nginx-ingress
+    app.kubernetes.io/version: 3.4.2
+    helm.sh/chart: nginx-ingress-1.1.2
+  annotations:
+    deployment.kubernetes.io/revision: '1'
+    meta.helm.sh/release-name: nginx
+    meta.helm.sh/release-namespace: default
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/instance: nginx
+      app.kubernetes.io/name: nginx-ingress
+  template:
+    metadata:
+      creationTimestamp: null
+      labels:
+        app.kubernetes.io/instance: nginx
+        app.kubernetes.io/name: nginx-ingress
+      annotations:
+        prometheus.io/port: '9113'
+        prometheus.io/scheme: http
+        prometheus.io/scrape: 'true'
+    spec:
+      containers:
+        - name: nginx-ingress
+          image: nginx/nginx-ingress:3.4.2
+          args:
+            - '-nginx-plus=false'
+            # ... (other args)
+          ports:
+            - name: http
+              containerPort: 80
+              protocol: TCP
+            - name: https
+              containerPort: 443
+              protocol: TCP
+            - name: prometheus
+              containerPort: 9113
+              protocol: TCP
+            - name: readiness-port
+              containerPort: 8081
+              protocol: TCP
+          env:
+            - name: POD_NAMESPACE
+              valueFrom:
+                fieldRef:
+                  apiVersion: v1
+                  fieldPath: metadata.namespace
+            - name: POD_NAME
+              valueFrom:
+                fieldRef:
+                  apiVersion: v1
+                  fieldPath: metadata.name
+          resources:
+            requests:
+              cpu: 100m
+              memory: 128Mi
+          readinessProbe:
+            httpGet:
+              path: /nginx-ready
+              port: readiness-port
+              scheme: HTTP
+            timeoutSeconds: 1
+            periodSeconds: 1
+            successThreshold: 1
+            failureThreshold: 3
+          terminationMessagePath: /dev/termination-log
+          terminationMessagePolicy: File
+          imagePullPolicy: IfNotPresent
+          securityContext:
+            # ... (security context settings)
+      restartPolicy: Always
+      terminationGracePeriodSeconds: 30
+      dnsPolicy: ClusterFirst
+      serviceAccountName: nginx-nginx-ingress
+      serviceAccount: nginx-nginx-ingress
+      automountServiceAccountToken: true
+      securityContext:
+        seccompProfile:
+          type: RuntimeDefault
+      schedulerName: default-scheduler
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxUnavailable: 25%
+      maxSurge: 25%
+  revisionHistoryLimit: 10
+  progressDeadlineSeconds: 600
+

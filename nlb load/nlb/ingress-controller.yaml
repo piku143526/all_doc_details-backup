@@ -1,0 +1,36 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: nginx-nginx-ingress-controller
+  namespace: default
+  labels:
+    app.kubernetes.io/instance: nginx
+    app.kubernetes.io/managed-by: Helm
+    app.kubernetes.io/name: nginx-ingress
+    app.kubernetes.io/version: 3.4.2
+    helm.sh/chart: nginx-ingress-1.1.2
+  annotations:
+    service.beta.kubernetes.io/aws-load-balancer-cross-zone-load-balancing-enabled: 'true'
+    service.beta.kubernetes.io/aws-load-balancer-eip-allocations: eipalloc-08aa1094cd444ec06
+    service.beta.kubernetes.io/aws-load-balancer-nlb-target-type: ip
+    service.beta.kubernetes.io/aws-load-balancer-scheme: internet-facing
+    service.beta.kubernetes.io/aws-load-balancer-ssl-cert: "arn:aws:acm:ap-south-1:557547717958:certificate/f48794d5-0a46-412c-8e35-12ae012ca01f"
+    service.beta.kubernetes.io/aws-load-balancer-subnets: subnet-0244b4bd594060922
+    service.beta.kubernetes.io/aws-load-balancer-type: external
+spec:
+  ports:
+    - name: http
+      port: 80
+      targetPort: 80
+    - name: https
+      port: 443
+      targetPort: 80
+  selector:
+    app.kubernetes.io/instance: nginx
+    app.kubernetes.io/name: nginx-ingress
+  type: LoadBalancer
+  externalTrafficPolicy: Cluster
+  allocateLoadBalancerNodePorts: true
+  loadBalancerClass: service.k8s.aws/nlb
+  internalTrafficPolicy: Cluster
+
