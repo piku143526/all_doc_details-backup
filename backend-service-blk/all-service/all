@@ -1,0 +1,291 @@
+
+========================================================================================================================================
+docker and docker-compose install on Amazon linx2 
+==================================================================================================================================================
+
+sudo amazon-linux-extras install docker -y
+sudo service docker start
+sudo usermod -a -G docker ec2-user
+sudo chkconfig docsudo amazon-linux-extras install docker -y
+sudo service docker ker on
+sudo yum install -y git
+sudo curl -L
+https://github.com/docker/compose/releases/download/1.22.0/docker-compose-$(uname
+-s)-$(uname -m) -o /usr/local/bin/docker-compose
+sudo curl -L https://github.com/docker/compose/releases/latest/download/docker-compose-$(uname -s)-$(uname -m) -o /usr/local/bin/docker-compose
+
+sudo chmod +x /usr/local/bin/docker-compose
+
+docker-compose version
+sudo chmod 666 /var/run/docker.sock
+
+=================================================================================================================================================
+
+Phpmayadmin setup using docker-compose file :- 
+
+vim docker-compose.yaml
+
+version: "2.0"
+services:
+  phpmyadmin:
+    container_name: phpmyadmin_container
+    image: phpmyadmin/phpmyadmin:5.0.1
+    restart: always
+    environment:
+      PMA_HOST: rds-testing.cfkkptzwiybb.us-east-1.rds.amazonaws.com   <-  ( RDS End point )
+      UPLOAD_LIMIT: 500M
+    ports:
+      - '0.0.0.0:82:80'
+      
+====================================================================================================================================================
+
+10.104.0.0/20 112.196.25.234/32 112.196.25.235/32 112.196.81.250/32 125.21.216.158/32 14.97.28.150/32 182.73.149.42/32
+
+
+===================================================================================================================================================
+
+Redis setup using docker-compose file :- 
+
+
+version: '2'
+services:
+  redis:
+   image: 'redis:7.0'
+   restart: always 
+   container_name: Redis-Server
+   environment:
+      - ALLOW_EMPTY_PASSWORD=yes
+   ports:
+      - "6379:6379"
+   volumes:
+      - ./config/redis.conf:/usr/local/etc/redis/redis.conf
+      - ./cache:/data
+   entrypoint: redis-server /usr/local/etc/redis/redis.conf
+   deploy:
+       resources:
+           limits:
+             memory: 2048M
+           reservations:
+             memory: 1024M
+
+
+=================================================================================================================================================
+
+Kafka  setup using docker-compose file :- 
+
+version: '3'
+services:
+  zookeeper:
+    container_name: zookeeper
+    image: wurstmeister/zookeeper
+    hostname: zookeeper
+    restart: always
+    ports:
+      - "2181:2181"
+    environment:
+      ZOO_MY_ID: 1
+      ZOO_PORT: 2181
+
+  kafka:
+    container_name: kafka
+    hostname: kafka
+    restart: always
+    image: confluentinc/cp-kafka:5.3.0
+    ports:
+      - '9092:9092'
+      - '29093:29093'
+    environment:
+      KAFKA_LISTENERS: LISTENER_DOCKER_INTERNAL://:19092,LISTENER_DOCKER_EXTERNAL://:9092,EXTERNAL_DIFFERENT_HOST://:29093
+      KAFKA_ADVERTISED_LISTENERS: LISTENER_DOCKER_INTERNAL://kafka:19092,LISTENER_DOCKER_EXTERNAL://kafka:9092,EXTERNAL_DIFFERENT_HOST://172.20.3.87:29093
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: LISTENER_DOCKER_INTERNAL:PLAINTEXT,LISTENER_DOCKER_EXTERNAL:PLAINTEXT,EXTERNAL_DIFFERENT_HOST:PLAINTEXT
+      KAFKA_INTER_BROKER_LISTENER_NAME: LISTENER_DOCKER_INTERNAL
+      KAFKA_ZOOKEEPER_CONNECT: "zookeeper:2181"
+      KAFKA_BROKER_ID: 1
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+    depends_on:
+      - zookeeper
+
+  kafdrop:
+    container_name: kafka-ui
+    image: obsidiandynamics/kafdrop
+    restart: always
+    ports:
+      - "9000:9000"
+    environment:
+      KAFKA_BROKERCONNECT: "kafka:19092"
+    depends_on:
+      - kafka
+
+
+======================================================================================================================================================================
+
+Nginx install on amazon linux2 
+
+#!/bin/bash
+sudo yum update -y
+sudo mkdir -p  /var/www/vhosts/frontend
+sudo chown ec2-user:ec2-user -R /var/www/vhosts/frontend/
+cd /var/www/vhosts/frontend/
+sudo amazon-linux-extras install nginx1 -y
+sudo service nginx start
+cd /etc/nginx/conf.d/
+sudo chmod 757 /etc/nginx/conf.d/
+cd /etc/nginx/conf.d/
+sudo wget  https://github.com/piku143526/nginx/raw/main/api.conf
+sudo wget  https://github.com/piku143526/nginx/raw/main/app.conf
+sudo chmod 755 /etc/nginx/conf.d/
+cd /var/www/vhosts/frontend/
+sudo wget https://github.com/piku143526/nginx/raw/main/index.html
+sudo systemctl restart nginx.service
+sudo systemctl enable nginx.service
+sudo amazon-linux-extras install epel -y
+sudo yum install -y certbot python2-certbot-nginx
+sudo systemctl status nginx.service
+
+====================================================================================================================================================================
+
+
+interactive_timeout		60
+wait_timeout		60
+log_output		file
+slow_query_log		1
+general_log		1
+log_bin_trust_function_creators 1
+read_only                  0
+long_query_time             5
+
+=================================================
+
+
+#################################################
+Apply cerbot through cmd 
+
+sudo amazon-linux-extras install epel -y
+sudo yum install -y certbot python2-certbot-nginx
+sudo certbot
+
+##################################################
+
+Ubuntu :- 
+sudo apt install certbot python3-certbot-nginx -y 
+===========================================================================================================
+
+version: '2'
+services:
+  kafka-ui:
+    image: provectuslabs/kafka-ui
+    container_name: kafka-ui
+    ports:
+      - "8080:8080"
+    restart: always
+    environment:
+      - KAFKA_CLUSTERS_0_NAME=Perstoc
+      - KAFKA_CLUSTERS_0_BOOTSTRAPSERVERS=172.31.31.223:9092
+      - KAFKA_CLUSTERS_0_ZOOKEEPER=172.31.31.223:2181
+      
+ ========================================================================================================
+
+
+version: '2'
+services:
+  kafka-ui:
+    image:  provectuslabs/kafka-ui:latest
+    container_name: kafka-ui
+    ports:
+      - "8080:8080"
+    restart: always
+    environment:
+      - KAFKA_CLUSTERS_0_NAME=Perstoc
+      - KAFKA_CLUSTERS_0_BOOTSTRAPSERVERS=172.31.31.223:9092
+      - KAFKA_CLUSTERS_0_ZOOKEEPER=172.31.31.223:2181
+      
+      
+      
+      ===========================================================================
+      
+version: '2'
+services:
+  kafka-ui:
+    image:  provectuslabs/kafka-ui:latest
+    container_name: kafka-ui
+    ports:
+      - "8080:8080"
+    restart: always
+    environment:
+      - KAFKA_CLUSTERS_0_NAME=Perstoc
+      - KAFKA_CLUSTERS_0_BOOTSTRAPSERVERS=172.31.31.223:9092
+      - KAFKA_CLUSTERS_0_ZOOKEEPER=172.31.31.223:2181
+      
+===================================================================================
+
+sudo apt update -y
+sudo apt install apt-transport-https ca-certificates curl software-properties-common   -y
+curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo apt-key add -
+sudo add-apt-repository "deb [arch=amd64] https://download.docker.com/linux/ubuntu focal stable"
+apt-cache policy docker-ce
+sudo apt install docker-ce -y
+sudo systemctl start docker
+sudo usermod -a -G docker ubuntu
+sudo chkconfig docker on
+sudo apt-get install -y git
+sudo curl -L
+https://github.com/docker/compose/releases/download/1.22.0/docker-compose-$(uname
+-s)-$(uname -m) -o /usr/local/bin/docker-compose
+sudo curl -L https://github.com/docker/compose/releases/latest/download/docker-compose-$(uname -s)-$(uname -m) -o /usr/local/bin/docker-compose
+
+sudo chmod +x /usr/local/bin/docker-compose
+
+docker-compose version
+sudo chmod 666 /var/run/docker.sock
+
+================================================================================================================================================
+
+#!/bin/bash
+sudo sudo apt update -y
+sudo mkdir -p  /var/www/vhosts/frontend
+sudo chown -R $USER:$USER /var/www/vhosts/frontend/
+cd /var/www/vhosts/frontend/
+sudo apt install nginx -y
+sudo systemctl start nginx.service
+cd /etc/nginx/conf.d/
+sudo chmod 757 /etc/nginx/conf.d/
+cd /etc/nginx/conf.d/
+sudo wget  https://github.com/piku143526/nginx/raw/main/nginx/ubuntu_nginx/api.conf
+sudo wget  https://github.com/piku143526/nginx/raw/main/nginx/ubuntu_nginx/app.conf
+sudo chmod 755 /etc/nginx/conf.d/
+cd /var/www/vhosts/frontend/
+sudo wget https://github.com/piku143526/nginx/raw/main/nginx/ubuntu_nginx/index.html
+sudo ssystemctl restart nginx.service 
+sudo systemctl enable nginx.service 
+sudo apt install certbot python3-certbot-nginx
+sudo systemctl status nginx.service 
+
+
+========================================================================================================================================
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
