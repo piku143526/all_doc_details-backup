@@ -1,0 +1,25 @@
+#!/bin/bash
+
+# Define the log file path
+log_file="/var/log/my_script.log"
+
+# Function to log messages with timestamps
+log() {
+  echo "$(date): $1"
+  echo "$(date): $1" >> "$log_file"
+}
+
+log "Truncating Docker container log files..."
+if sudo sh -c "truncate -s 0 /var/lib/docker/containers/*/*-json.log"; then
+  log "Log files truncated successfully."
+else
+  log "Error truncating log files."
+fi
+
+log "Restarting Docker containers..."
+if docker restart wallet_main wallet_btc wallet_eth wallet_bsc wallet_tron orders_service matching_engine users_service email_service liquidity_service admin_panel graph_service socket_service; then
+  log "Containers restarted successfully."
+else
+  log "Error restarting containers."
+fi
+

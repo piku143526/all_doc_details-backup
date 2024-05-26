@@ -1,0 +1,152 @@
+version: 1
+frontend:
+  phases:
+    preBuild:
+      commands:
+        - npm --force install
+    build:
+      commands:
+        - npm run build
+  artifacts:
+    baseDirectory: build
+    files:
+      - '**/*'
+  cache:
+    paths:
+      - node_modules/**/*
+      
+           
+      
+ ======================================Angular V-14===========
+        
+version: 1
+frontend:
+  phases:
+    preBuild:
+      commands:
+        - npm install --legacy-peer-deps
+    build:
+      commands:
+        - npm run build
+  artifacts:
+    baseDirectory: dist/rapi-xchange/
+    files:
+      - '**/*'
+  cache:
+    paths:
+      - node_modules/**/*
+      
+      
+      
+      
+      ====================================================frontent angular SSR==============
+      
+version: 1
+frontend:
+  phases:
+    preBuild:
+      commands:
+        - npm --force install 
+    build:
+      commands:
+        - npm run build
+  artifacts:
+    baseDirectory: dist/rapi-xchange/browser/
+    files:
+      - '**/*'
+  cache:
+    paths:
+      - node_modules/**/*
+  
+  
+  
+============================================next js ==============================================
+
+
+
+
+
+version: 1
+frontend:
+  phases:
+    preBuild:
+      commands:
+        - yarn install
+    build:
+      commands:
+        - yarn run build
+  artifacts:
+    baseDirectory: .next
+    files:
+      - '**/*'
+  cache:
+    paths:
+      - node_modules/**/*
+      
+      
+===================================================================
+
+
+version: 1
+frontend:
+  phases:
+    preBuild:
+      commands:
+        - npm ci
+    build:
+      commands:
+        - npm run build
+  artifacts:
+    baseDirectory: build
+    files:
+      - '**/*'
+  cache:
+    paths:
+      - node_modules/**/*
+
+
+===================================================================
+
+version: 1
+frontend:
+  phases:
+    preBuild:
+      commands:
+        - nvm install 14.17.3
+        - nvm use 14.17.3
+        - npm --force install
+    build:
+      commands:
+        - npm run build
+  artifacts:
+    baseDirectory: build
+    files:
+      - '**/*'
+  cache:
+    paths:
+      - node_modules/**/*
+=========================================================================
+
+- nvm install 21.1.0
+      - nvm use   21.1.0
+      
+      
+      
+version: 1
+frontend:
+  phases:
+    preBuild:
+      commands:
+        - nvm install 21.1.0
+        - nvm use 21.1.0
+        - npm --force install
+    build:
+      commands:
+        - npm run build
+  artifacts:
+    baseDirectory: build
+    files:
+      - '**/*'
+  cache:
+    paths:
+      - node_modules/**/*
