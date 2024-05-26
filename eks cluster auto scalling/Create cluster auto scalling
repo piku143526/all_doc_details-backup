@@ -1,0 +1,100 @@
+Create cluster auto scalling in EKS 
+
+================================================================================================================
+
+Link :- https://github.com/stacksimplify/aws-eks-kubernetes-masterclass/tree/master/17-EKS-Autoscaling-Cluster-Autoscaler
+
+Links :- https://github.com/stacksimplify
+
+===========================================================================================================================================================================
+
+EKS - Cluster Autoscaler
+ 
+Step 1 :- Go to iam then click Role ----------> search your cluster name  node group and click like (eksctl-qa-stbl-nodegroup-qa-stbl-n-NodeInstanceRole-meUPz5fyCUKR)
+
+add permissions 
+
+AutoScalingFullAccess
+
+===========================================================================================================================================================================
+
+Deploy Cluster Autoscaler
+
+# Deploy the Cluster Autoscaler to your cluster
+
+kubectl apply -f https://raw.githubusercontent.com/kubernetes/autoscaler/master/cluster-autoscaler/cloudprovider/aws/examples/cluster-autoscaler-autodiscover.yaml
+
+==========================================================================================================================================================================
+
+# Add the cluster-autoscaler.kubernetes.io/safe-to-evict annotation to the deployment
+
+
+kubectl -n kube-system annotate deployment.apps/cluster-autoscaler cluster-autoscaler.kubernetes.io/safe-to-evict="false"
+
+==========================================================================================================================================================================
+
+ Edit Cluster Autoscaler Deployment to add Cluster name and two more parameters
+ 
+ 
+kubectl -n kube-system edit deployment.apps/cluster-autoscaler
+
+==========================================================================================================================================================================
+Add cluster name
+
+# Before Change
+        - --node-group-auto-discovery=asg:tag=k8s.io/cluster-autoscaler/enabled,k8s.io/cluster-autoscaler/<YOUR CLUSTER NAME>
+
+# After Change
+        - --node-group-auto-discovery=asg:tag=k8s.io/cluster-autoscaler/enabled,k8s.io/cluster-autoscaler/eksdemo1
+        
+        
+=========================================================================================================================================================================
+Add two more parameters
+
+        - --balance-similar-node-groups
+        - --skip-nodes-with-system-pods=false
+        
+        
+=========================================================================================================================================================================
+
+Set the Cluster Autoscaler Image related to our current EKS Cluster version
+
+
+# Update Cluster Autoscaler Image Version
+kubectl -n kube-system set image deployment.apps/cluster-autoscaler cluster-autoscaler=us.gcr.io/k8s-artifacts-prod/autoscaling/cluster-autoscaler:v1.16.5
+
+
+change --------------->
+
+kubectl -n kube-system set image deployment.apps/cluster-autoscaler cluster-autoscaler=registry.k8s.io/autoscaling/cluster-autoscaler:v1.25.3      
+
+
+kubectl -n kube-system set image deployment.apps/cluster-autoscaler cluster-autoscaler=registry.k8s.io/autoscaling/cluster-autoscaler:v1.28.2
+
+=======================================================================================================================================================================
+
+Verify Image version got updated
+
+
+kubectl -n kube-system get deployment.apps/cluster-autoscaler -o yaml
+
+
+=========================================================================================================================================================================
+
+
+View Cluster Autoscaler logs to verify that it is monitoring your cluster load.
+
+kubectl -n kube-system logs -f deployment.apps/cluster-autoscaler
+
+
+=========================================================================================================================================================================
+
+
+
+
+
+
+
+
+
+

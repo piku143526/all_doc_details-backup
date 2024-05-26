@@ -1,0 +1,32 @@
+AWS code pipeline :-
+
+=============================================================
+
+link:- https://github.com/stacksimplify/aws-eks-kubernetes-masterclass/tree/master/11-DevOps-with-AWS-Developer-Tools
+
+==========================================================================================================================
+
+
+arn:aws:iam::814659145338:role/EksCodeBuildKubectlRole
+
+
+
+# Export your Account ID
+export ACCOUNT_ID=814659145338
+
+# Set Trust Policy
+TRUST="{ \"Version\": \"2012-10-17\", \"Statement\": [ { \"Effect\": \"Allow\", \"Principal\": { \"AWS\": \"arn:aws:iam::${ACCOUNT_ID}:root\" }, \"Action\": \"sts:AssumeRole\" } ] }"
+
+# Verify inside Trust policy, your account id got replacd
+echo $TRUST
+
+# Create IAM Role for CodeBuild to Interact with EKS
+aws iam create-role --role-name EksCodeBuildKubectlRole --assume-role-policy-document "$TRUST" --output text --query 'Role.Arn'
+
+# Define Inline Policy with eks Describe permission in a file iam-eks-describe-policy
+echo '{ "Version": "2012-10-17", "Statement": [ { "Effect": "Allow", "Action": "eks:Describe*", "Resource": "*" } ] }' > /tmp/iam-eks-describe-policy
+
+# Associate Inline Policy to our newly created IAM Role
+aws iam put-role-policy --role-name EksCodeBuildKubectlRole --policy-name eks-describe --policy-document file:///tmp/iam-eks-describe-policy
+
+# Verify the same on Management Console
