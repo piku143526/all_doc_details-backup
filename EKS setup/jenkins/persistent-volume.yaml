@@ -1,0 +1,15 @@
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: ebs-pv-claim
+  namespace: stage-demo 
+spec:
+  capacity:
+    storage: 10Gi   # Must be equal to or greater than the size specified in the PVC
+  volumeMode: Filesystem
+  accessModes:
+    - ReadWriteOnce
+  persistentVolumeReclaimPolicy: Retain
+  storageClassName: ebs-sc
+  hostPath:
+    path: /data/jenkins-data   # Replace with the actual path on your Ubuntu system

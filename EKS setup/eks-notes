@@ -1,0 +1,406 @@
+================================================================================================================================
+
+First create AWS ACCESS & SECRET KEY AND CONFIGURE ON YOUR LOCAL SYSTEM:-
+
+***REQUIREMENTS:- EKCTL,AWS CLI,KUBECTL,KUBECTX,KUBENS,HELM
+
+================================================================================================================================
+
+###For Creating Cluster in Same VPC where we have Our Servers###########
+ 
+ ****Now paste all the subnets of Our VPC in private subnets :-
+ 
+1. eksctl create cluster --name= qa-stbl \
+                      --region=ap-southeast-1 \
+                       --vpc-private-subnets=subnet-0c1930b3bfbbd8067,subnet-08d4d9c0447209a5f \
+                      --without-nodegroup 
+                
+================================================================================================================================
+                                            
+2. eksctl utils associate-iam-oidc-provider \
+    --region ap-southeast-1 \
+    --cluster qa-stbl \
+    --approve 
+    
+================================================================================================================================    
+    
+3. CREATE NODE with YML according to your Desired capacity and Size according to Backend Services:-
+
+# vim node.yml 
+
+apiVersion: eksctl.io/v1alpha5
+kind: ClusterConfig
+metadata:
+  name: qa-stbl
+  region: ap-southeast-1
+managedNodeGroups:
+  - name: qa-stbl-ng
+    instanceType: t3.large
+    desiredCapacity: 1
+    minSize: 1
+    maxSize: 2
+    volumeSize: 80
+    privateNetworking: true
+    ssh: # use existing EC2 key
+      publicKeyName:  qa-stbl
+================================================================================================================================      
+****Then Run this Command:-
+      
+4. eksctl create nodegroup --config-file node.yml     
+ 
+5. aws eks --region ap-southeast-1 update-kubeconfig --name qa-stbl
+================================================================================================================================
+ 
+*********Then create Namespace:-
+ 
+ 6. vim  namespace.yml OR kubectl create ns stage-skoda
+ 
+ 
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: stbl-ns
+  
+7. kubectl apply -f namespace.yml
+
+================================================================================================================================
+
+******Then Create Deployment & Services files:-
+
+######Deployment.yml#######:-
+
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name:  admin
+  labels:
+    app:  admin
+  namespace: skoda-ns
+spec:
+  selector:
+    matchLabels:
+      app: admin
+  strategy:
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 1
+    type: RollingUpdate
+  template:
+    metadata:
+      labels:
+        app:  admin
+    spec:
+      containers:
+      - image: 952711092194.dkr.ecr.ap-southeast-1.amazonaws.com/admin:latest
+        imagePullPolicy: Always
+        name:  admin
+        envFrom:
+          - configMapRef:
+              name: admin-env
+        resources:
+            limits:
+              cpu: 500m
+            requests:
+              cpu: 200m    
+        ports:
+        - containerPort:  3001           ###Use Two Container Ports ONLY IF WE HAVE GRPC OTHERWISE USE ONLY ONE ######
+          name: admin-port
+        - containerPort:  30010
+          name:  grpc-port
+      restartPolicy: Always
+
+8. kubectl apply -f deployment.yml
+
+================================================================================================================================
+######Service.yml######:-
+
+
+kind: Service
+apiVersion: v1
+metadata:
+  name:  admin
+  labels:
+    app: admin
+  namespace: skoda-ns
+  annotations:
+    alb.ingress.kubernetes.io/healthcheck-path: '/admin/api/v1/status'
+spec:
+  selector:
+    app:  admin
+  ports:				#################ONLY USE TWO PORTS IF WE HAVE GRPC#######
+    - name:  admin-port
+      port:  3001
+      targetPort: 3001
+    - name:  grpc-port
+      port:  30010
+      targetPort: 30010
+      
+ 9. kubectl apply -f service.yml     
+================================================================================================================================      
+######Configmap.yml######:-    
+
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: admin-env
+  labels:
+    app: admin-env
+  namespace: skoda-ns
+data:				######BELOW DATA PASTE YOUR ENV DIRECTLY############
+  PORT: '3001'
+  NODE_ENV: stagging
+  
+  ## DATABASE
+  DB_HOST: stage-rds-skoda.cxb00unawhbx.ap-southeast-1.rds.amazonaws.com
+  DB_PORT: '3306'
+  DB_USER: admin
+  DB_PASS: adminagaarww123
+  DB_DIALECT: mysql
+  DB_NAME_TEST: skoda_admin_service
+  DB_NAME_DEV: skoda_admin_service
+  DB_NAME_PROD: skoda_admin_service
+  
+  ## JWT
+  JWT_SECRET: SocialNetworkjwtkey
+  REFRESH_SECRET: SocialNetworkrefreshkey
+  TOKEN_EXPIRATION: 365day
+  REFRESH_TOKEN_EXPIRATION: 1day
+  BEARER: Bearer
+  
+  ## KAFKA
+  KAFKA_CLIENT_ID: SKODA_SERVICE
+  KAFKA_BROKER: 0.0.0.0:9092
+  KAFKA_GROUP_ID: skoda_admin_service
+  
+  ## REDIS
+  REDIS_HOST: '172.31.23.98'
+  REDIS_PORT: '6379'
+  REDIS_URL: redis://172.31.23.98:6379
+  
+  ## RABBITMQ
+  RABBITMQ_URL: amqp://admin:K0eKX0PBQD4HT*79!hrf1W@172.31.23.98:5672
+  
+  ## CONTACT US
+  CONTACT_US_EMAIL: testantiertest@gmail.com
+  
+  ## GRPC
+  GRPC_ADMIN_URL: 0.0.0.0:30010
+  GRPC_USER_URL: users.skoda-ns:30020
+  GRPC_NFT_URL: nft.skoda-ns:30030
+  
+  
+  
+10. kubectl apply -f config-new.yml
+================================================================================================================================
+
+######################################
+Ingress:-
+
+11. curl -O https://raw.githubusercontent.com/kubernetes-sigs/aws-load-balancer-controller/v2.4.7/docs/install/iam_policy.json
+
+12. ls -ltr
+
+13. aws iam create-policy \
+    --policy-name AWSLoadBalancerControllerIAMPolicy-new \
+    --policy-document file://iam_policy.json
+    
+================================================================================================================================
+#################Make a NOTE of Policy ARN as we are going to use that in next step when creating IAM Role#######
+
+14. eksctl create iamserviceaccount \
+  --cluster=prod-fanverse \
+  --namespace=kube-system \
+  --name=aws-load-balancer-controller \
+  --attach-policy-arn=arn:aws:iam::814659145338:policy/AWSLoadBalancerControllerIAMPolicy-new \
+  --override-existing-serviceaccounts \
+  --approve
+
+  #######Made three changes in 15 command :-
+   
+  ClusterName,Region,VPC ID of your VPC:-
+  
+  Name :     kubernetes.io/role/elb	     value   1
+
+================================================================================================================================
+
+15. helm install aws-load-balancer-controller eks/aws-load-balancer-controller \
+  -n kube-system \
+  --set clusterName=prod-fanverse \
+  --set serviceAccount.create=false \
+  --set serviceAccount.name=aws-load-balancer-controller-new \
+  --set region=ap-southeast-2 \
+  --set vpcId=vpc-0d6f30662e605851d \
+  --set image.repository=602401143452.dkr.ecr.us-east-1.amazonaws.com/amazon/aws-load-balancer-controller
+  
+================================================================================================================================
+
+  **IMPORTANT:-
+ 16. ##########Now Go in VPC we need to give key & value in VPC Tags if the VPC is not created by EKS Cluster:-
+  Key:- kubernetes.io/role/elb
+  Value:- 1 
+================================================================================================================================  
+17. https://kubernetes-sigs.github.io/aws-load-balancer-controller/v2.2/guide/ingress/annotations/#subnets (FROM HERE WE WILL TAKE THE NEW ANNOTATION AND ADD THAT IN OUR INGRESS FILE BECAUSE IT IS DEPRECIATED)
+
+================================================================================================================================
+
+18. Now create the Ingress
+
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: ingress
+  namespace: stbl-ns
+  annotations:
+    # Ingress Core Settings
+    alb.ingress.kubernetes.io/scheme: internet-facing
+    alb.ingress.kubernetes.io/target-type: ip
+    # Health Check Settings
+    alb.ingress.kubernetes.io/healthcheck-protocol: HTTP
+    alb.ingress.kubernetes.io/healthcheck-port: traffic-port
+    alb.ingress.kubernetes.io/subnets: subnet-0b8e5c51b44258b5f,subnet-00837691fbde922ad ## Need to Paste Public Subnets of VPC
+    alb.ingress.kubernetes.io/healthcheck-interval-seconds: '15'
+    alb.ingress.kubernetes.io/healthcheck-timeout-seconds: '5'
+    alb.ingress.kubernetes.io/success-codes: '200'
+    alb.ingress.kubernetes.io/healthy-threshold-count: '2'
+    alb.ingress.kubernetes.io/unhealthy-threshold-count: '2'
+    # SSL certifacte Setting
+    alb.ingress.kubernetes.io/listen-ports: '[{"HTTPS":443}, {"HTTP":80}]'
+    alb.ingress.kubernetes.io/certificate-arn: arn:aws:acm:ap-southeast-1:497432915557:certificate/3d8bad56-369a-442f-963a-fcbaf2ff8f70 ## need to chnage
+    alb.ingress.kubernetes.io/ssl-redirect: '443'
+    # Load Balancer Name
+    alb.ingress.kubernetes.io/load-balancer-name: qa-stbl-alb-eks
+spec:
+  ingressClassName: alb
+  rules:
+
+    - host: qa-api.stbl.io  
+      http:
+        paths:
+          - path: /admin
+            pathType: Prefix
+            backend:
+              service:
+                name: admin
+                port:
+                  number: 3005
+    - host: qa-api.stbl.io
+      http:
+        paths:
+          - path: /notification
+            pathType: Prefix
+            backend:
+              service:
+                name: email
+                port:
+                  number: 3011
+    - host: qa-api.stbl.io
+      http:
+        paths:
+          - path: /users
+            pathType: Prefix
+            backend:
+              service:
+                name: users
+                port:
+                  number: 3001
+ 
+ 
+ 
+================================================================================================================================
+
+##########FOR STORING LOGS#####################
+
+19. eksctl create addon --name aws-ebs-csi-driver --cluster qa-stbl --service-account-role-arn arn:aws:iam::497432915557:role/AmazonEKS_EBS_CSI_DriverRole --force
+
+================================================================================================================================
+
+20. eksctl create iamserviceaccount \
+    --name ebs-csi-controller-sa \
+    --namespace kube-system \
+    --cluster qa-stbl \
+    --role-name AmazonEKS_EBS_CSI_DriverRole \
+    --role-only \
+    --attach-policy-arn arn:aws:iam::aws:policy/service-role/AmazonEBSCSIDriverPolicy \
+    --approve
+  
+================================================================================================================================
+
+########NOW CREATE THE STORAGE CLASS#############
+20. vim storage-class.yml
+
+apiVersion: storage.k8s.io/v1
+kind: StorageClass
+metadata: 
+  name: ebs-sc
+provisioner: ebs.csi.aws.com
+reclaimPolicy: Retain
+  
+21. kubectl apply -f storage-class.yml
+=======================================================================================================================================================================================
+
+22. helm upgrade --install loki grafana/loki-stack  --set grafana.enabled=true,prometheus.enabled=true,prometheus.alertmanager.persistentVolume.enabled=false,prometheus.server.persistentVolume.enabled=false,loki.persistence.enabled=true,loki.persistence.storageClassName=ebs-sc,loki.persistence.size=10Gi  
+  
+=======================================================================================================================================================================================
+
+Install matrics server 
+
+kubectl apply -f https://github.com/kubernetes-sigs/metrics-server/releases/latest/download/components.yaml
+
+====================================================================================================================================================================================
+
+vim hp-admin.yaml
+
+apiVersion: autoscaling/v1
+kind: HorizontalPodAutoscaler
+metadata:
+  name: admin
+  namespace: stbl-ns
+spec:
+  maxReplicas: 1
+  minReplicas: 1
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: admin
+  targetCPUUtilizationPercentage: 60
+
+===============================================================================================================================================================================
+kubectl apply -f hp-admin.yaml
+================================================================================================================================================================================
+link for metric server 
+
+https://github.com/kubernetes-sigs/metrics-server
+https://gist.github.com/NileshGule/8f772cf04ea6ae9c76d3f3e9186165c2
+
+
+kubectl apply -f https://github.com/kubernetes-sigs/metrics-server/releases/latest/download/components.yaml
+==============================================================================================================================================================================
+some change for metrics server 
+
+ kubectl -n kube-system edit deploy metrics-server
+ 
+ kubernetes-metrics-server.yaml
+      containers:
+      - args:
+        - --cert-dir=/tmp
+        - --secure-port=4443
+        - --kubelet-preferred-address-types=InternalIP,ExternalIP,Hostname
+        - --kubelet-use-node-status-port
+        - --metric-resolution=15s
+        command:
+        - /metrics-server
+        - --kubelet-insecure-tls
+        - --kubelet-preferred-address-types=InternalIP
+
+============================================================================================================================================================================
+
+kubectl top node 
+kubectl top pods 
+kubectl top pods --containers
+==========================================================================================================================================================================
+
+ 
+  link :-  https://docs.aws.amazon.com/eks/latest/userguide/aws-load-balancer-controller.html
+  
+   links :-  https://docs.aws.amazon.com/eks/latest/userguide/csi-iam-role.html
+   

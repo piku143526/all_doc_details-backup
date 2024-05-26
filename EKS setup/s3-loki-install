@@ -1,0 +1,5 @@
+kubectl create secret generic prod-loki-s3 --from-literal=AWS_ACCESS_KEY_ID='' --from-literal=AWS_SECRET_ACCESS_KEY='' -n default
+
+
+
+helm upgrade --install loki grafana/loki-stack -f values.yaml
