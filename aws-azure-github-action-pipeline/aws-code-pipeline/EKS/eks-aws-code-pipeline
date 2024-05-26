@@ -1,0 +1,35 @@
+version: 0.2
+phases:
+  install:
+    commands:
+      - echo "Install Phase - Nothing to do using latest Amazon Linux Docker Image for CodeBuild which has all AWS Tools - https://github.com/aws/aws-codebuild-docker-images/blob/master/al2/x86_64/standard/3.0/Dockerfile"
+  pre_build:
+    commands:
+      - echo "Logging in to Docker Hub"
+      - aws ecr get-login-password --region ap-southeast-1 | docker login --username AWS --password-stdin 557547717958.dkr.ecr.ap-southeast-1.amazonaws.com
+  build:
+    commands:
+      - echo "Building the Docker image"
+      - docker build -t uat-api-service .
+      
+      - echo "Tag the Docker image"      
+      - docker tag uat-api-service:latest 557547717958.dkr.ecr.ap-southeast-1.amazonaws.com/uat-api-service:latest
+      
+  post_build:
+    commands:
+      - echo "Pushing the Docker image to Amazon ECR..."
+      - docker push 557547717958.dkr.ecr.ap-southeast-1.amazonaws.com/uat-api-service:latest
+
+      - echo "Setting Environment Variables for AWS CLI..."
+      - export AWS_ACCESS_KEY_ID=$access_key
+      - export AWS_SECRET_ACCESS_KEY=$secret_key
+      - export AWS_DEFAULT_REGION=ap-southeast-2
+
+      - echo "Updating Kube Config..."
+      - aws eks update-kubeconfig --name uat-skymarvel
+
+      - echo "Applying changes to Kubernetes Deployment..."
+      - kubectl rollout restart deployment api-service -n skymarvel-ns
+
+      - echo "Completed applying changes to Kubernetes objects."
+

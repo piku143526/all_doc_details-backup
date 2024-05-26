@@ -1,0 +1,27 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: demo-ingress
+  namespace: ingress-nginx
+  annotations:    
+    nginx.ingress.kubernetes.io/rewrite-target: /
+    kubernetes.io/ingress.class: "nginx"
+    nginx.ingress.kubernetes.io/use-regex: "true"
+    cert-manager.io/cluster-issuer: letsencrypt-prod  # Specify the ClusterIssuer
+spec: 
+  ingressClassName: nginx
+  tls:
+  - hosts:
+    - phpmyadmin.comawari.io
+    secretName: webhook-cert  # Specify the secret to store the TLS certificate
+  rules:
+  - host: phpmyadmin.comawari.io
+    http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: nginx-service
+            port:
+              number: 80

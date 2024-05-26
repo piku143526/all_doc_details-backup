@@ -1,0 +1,122 @@
+pipeline {
+    agent any
+
+    stages {
+        stage('git clone') {
+            steps {
+                script {
+                    git credentialsId: 'gitlab-nexa', url: 'http://repo.antiersolutions.com/nexablock/nexablock-backend.git', branch: 'develop' 
+                }
+            }
+        }
+        
+        stage('Login to ECR') {
+            steps {
+                script {
+                    // Setup AWS CLI credentials for ECR
+                    sh "aws ecr get-login-password --region ap-southeast-1 | docker login --username AWS --password-stdin 633813069664.dkr.ecr.ap-southeast-1.amazonaws.com"
+                }
+            }
+        }
+        
+        stage('Docker build') {
+            steps {
+                script {
+                    // Docker build
+                    sh "docker build -t prod-api-service ." 
+                }
+            }
+        }
+        
+        stage('Docker tag') {
+            steps {
+                script {
+                    // Docker tag
+                    sh "docker tag prod-api-service:latest 633813069664.dkr.ecr.ap-southeast-1.amazonaws.com/prod-api-service:${env.BUILD_ID}"
+                }
+            }
+        }
+        
+        stage('Docker push to ECR') {
+            steps {
+                script {
+                    // Docker push to ECR
+                    sh "docker push 633813069664.dkr.ecr.ap-southeast-1.amazonaws.com/prod-api-service:${env.BUILD_ID}"
+                }
+            }
+        }
+        
+        stage('Remove Docker Image on Jenkins server') {
+            steps {
+                script {
+                    // Remove Docker images 
+                    sh "docker system prune -af"
+                }
+            }
+        }
+        
+        stage('Workspace Cleanup') {
+            steps {
+                script {
+                    // Clean up the workspace
+                    deleteDir()
+                }
+            }
+        }
+
+        stage('Update deployment imgaes') {
+            steps {
+                script {
+                    // Update deployment imgaes
+                    sh "/usr/local/bin/kubectl set image deployment/api-service api-service=633813069664.dkr.ecr.ap-southeast-1.amazonaws.com/prod-api-service:${env.BUILD_ID} -n nexablock-ns"
+                }
+            }
+        }
+        stage('Restart Kubernets deployement') {
+            steps {
+                script {
+                    // Applying changes to Kubernetes Deployment 
+                    sh "/usr/local/bin/kubectl rollout restart deployment api-service -n nexablock-ns"
+                }
+            }
+        } 
+        
+    }
+    
+    post {
+    always {
+        emailext (
+            subject: 'NexaBlock MLM: Backend Api Service', 
+            mimeType: 'text/html', 
+            to: 'nexablock297@gmail.com',
+            recipientProviders: [[$class: 'DevelopersRecipientProvider'],[$class: 'RequesterRecipientProvider']], 
+            body: 'Testing Jenkins sending an email message after building a job.'
+        )
+    }
+    
+    success {
+        emailext (
+            subject: "Success: [NexaBlock MLM] Backend Api Service Successfully Deployed", 
+            mimeType: 'text/html', 
+            to: 'nexablock297@gmail.com, nitin.sharma@antiersolutions.com, pradeep.kumar@antiersolutions.com, aman.saxena@antiersolutions.com, gowtham@antiersolutions.com, ankit.bhatia@antiersolutions.com, rajinder.singh@antiersolutions.com, neil.kad@antiersolutions.com',
+            recipientProviders: [[$class: 'DevelopersRecipientProvider'],[$class: 'RequesterRecipientProvider']], 
+            //body: "<b>Example</b><br/>Project: ${env.JOB_NAME} <br/>Build Number: ${env.BUILD_NUMBER} <br/> URL de build: ${env.BUILD_URL}"
+              body: "<b>NexaBlock MLM</b><br/>Project: ${env.JOB_NAME} <br/>Build Number: ${env.BUILD_NUMBER} <br/>[NexaBlock MLM]:Frontend Admin Service Successfully Deployed"
+
+        )
+    }
+
+    failure {
+        emailext (
+            subject: "Failure: [NexaBlock MLM] Backend Api Service Not Deployed", 
+            mimeType: 'text/html', 
+            to: 'nexablock297@gmail.com, nitin.sharma@antiersolutions.com, pradeep.kumar@antiersolutions.com, aman.saxena@antiersolutions.com, gowtham@antiersolutions.com, ankit.bhatia@antiersolutions.com, rajinder.singh@antiersolutions.com, neil.kad@antiersolutions.com',
+            recipientProviders: [[$class: 'DevelopersRecipientProvider'],[$class: 'RequesterRecipientProvider']], 
+            //body: "<b>Example</b><br/>Project: ${env.JOB_NAME} <br/>Build Number: ${env.BUILD_NUMBER} <br/> URL de build: ${env.BUILD_URL}"
+            body: "<b>NexaBlock MLM</b><br/>Project: ${env.JOB_NAME} <br/>Build Number: ${env.BUILD_NUMBER} <br/> [NexaBlock MLM]: Frontend Admin Service Not Deployed"
+
+        )
+    }
+  }
+}
+

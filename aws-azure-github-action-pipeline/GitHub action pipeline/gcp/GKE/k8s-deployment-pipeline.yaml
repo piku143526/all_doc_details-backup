@@ -1,0 +1,45 @@
+
+name: Backend users-service
+on:
+  repository_dispatch:
+    types: [trigger-workflow-users-service]
+  push:
+    branches:
+      - main
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v2
+
+      - name: Configure Git
+        run: |
+          git config user.email "priyanka.giri@antiersolutions.com"
+          git config user.name "priyankagiri-antier"
+
+      - name: Modify Deployment File
+        run: |
+          cat ./user/user-deployment.yml
+          sed -i 's+asia-southeast1-docker.pkg.dev/antier-staging/stage-gaudiy/users_service.*+asia-southeast1-docker.pkg.dev/antier-staging/stage-gaudiy/users_service:${{ github.event.client_payload.github_run_id }} +g' ./user/user-deployment.yml           
+          cat ./user/user-deployment.yml
+
+      - name: Git Add
+        run: |
+          cd user
+          git add .
+          git commit -m "Done by GitHub Actions"
+
+      - name: Push Changes
+        run: |
+          git remote set-url origin https://x-access-token:${{ secrets.GH_TOKEN }}@github.com/priyankagiri-antier/staging-k8s-deployment
+          git push origin main
+
+
+      - name: Restart Deployment Service
+        run: echo "Restart Deployment Service"
+
+      - name: Service deploy through Argocd
+        run: echo "Service deploy through Argocd"

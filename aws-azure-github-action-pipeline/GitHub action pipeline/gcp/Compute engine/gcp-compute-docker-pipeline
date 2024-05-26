@@ -1,0 +1,60 @@
+
+name: Docker Image CI frontend_legal_app_service
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+
+env:
+  PROJECT_ID: neat-gasket-395017
+  GKE_ZONE: asia-south1-a
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      # Authenticate with GCP using service account key
+      - name: Authenticate with GCP
+        uses: google-github-actions/auth@v2
+
+        with:
+          credentials_json: '${{ secrets.GOOGLE_CREDENTIALS }}'
+          project_id: neat-gasket-395017
+
+      - name: Docker Build
+        run: |
+          docker build -t frontend_legal_app .
+
+      - name: Login to GCR
+        run: |
+          echo "Y" | gcloud auth configure-docker asia-south1-docker.pkg.dev
+
+      - name: Docker Tag
+        run: |
+          docker tag frontend_legal_app:latest asia-south1-docker.pkg.dev/neat-gasket-395017/prod-legal-app/frontend_legal_app:${{ github.run_id }}
+
+      - name: Docker Push
+        run: |
+          docker push asia-south1-docker.pkg.dev/neat-gasket-395017/prod-legal-app/frontend_legal_app:${{ github.run_id }}
+
+      - name: SSH into GCP VM and run script
+        uses: appleboy/ssh-action@master
+        with:
+          host: ${{ secrets.SSH_HOST }}
+          username: ${{ secrets.SSH_USERNAME }}
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          port: ${{ secrets.SSH_PORT }}
+          script: |
+            cd /home/ubuntu/legal_app_frontend
+            docker-compose down
+            export IMAGE_NAME=asia-south1-docker.pkg.dev/neat-gasket-395017/prod-legal-app/frontend_legal_app:${{ github.run_id }}
+            docker-compose up -d
+            

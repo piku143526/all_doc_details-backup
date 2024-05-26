@@ -1,0 +1,83 @@
+trigger:
+- zumloai
+
+resources:
+- repo: self
+
+variables:
+  # Container registry service connection established during pipeline creation
+  dockerRegistryServiceConnection: 'a51ffb4c-78fc-40ab-a92c-10c2bb27a1f4'
+  imageRepository: 'zumloai-app'
+  containerRegistry: 'zumloresgistry.azurecr.io'
+  dockerfilePath: '**/Dockerfile'
+  tag: '$(Build.BuildId)'
+  latestTag: 'latest'
+  azureSubscription: 'c87ac9cb-3d03-49be-8ff1-64a331d3999a'
+  resourceGroupName: 'DevResourceGroup'
+  networkSecurityGroupName: 'dev-app-zumlo-nsg'
+
+  # Agent VM image name
+  vmImageName: 'ubuntu-latest'
+
+stages:
+- stage: Build
+  displayName: Build and push stage
+  jobs:
+  - job: Build
+    displayName: Build
+    pool:
+      vmImage: $(vmImageName)
+    steps:
+    - task: Docker@2
+      displayName: Build and push an image to container registry
+      inputs:
+        command: buildAndPush
+        repository: $(imageRepository)
+        dockerfile: $(dockerfilePath)
+        containerRegistry: $(dockerRegistryServiceConnection)
+        tags: |
+          $(tag)
+          $(latestTag)
+
+- stage: Deploy
+  displayName: Deploy stage
+  jobs:
+  - job: Deploy
+    displayName: Deploy to VM
+    pool:
+      vmImage: $(vmImageName)
+    steps:
+    - task: AzureCLI@2
+      displayName: "Add Agent Public IP to NSG"
+      inputs:
+        azureSubscription: 'Azure subscription 1(c87ac9cb-3d03-49be-8ff1-64a331d3999a)'
+        scriptType: 'pscore'
+        scriptLocation: 'inlineScript'
+        inlineScript: |
+          $agentHostPublicIp = (Invoke-WebRequest -Uri ifconfig.me/ip).Content.Trim()
+          $agentHostPublicIpWithCidr = "$agentHostPublicIp/32"
+          Write-Output "Public IP of agent to add: $agentHostPublicIpWithCidr"
+          az network nsg rule create --resource-group $(resourceGroupName) --nsg-name $(networkSecurityGroupName) --name allow-agent-ip --priority 200 --source-address-prefixes $agentHostPublicIpWithCidr --source-port-ranges '' --destination-address-prefixes '' --destination-port-ranges 22 --access Allow --protocol Tcp --description "Allow SSH from Azure DevOps agent"
+          Start-Sleep -Seconds 120
+    - task: SSH@0
+      inputs:
+        sshEndpoint: 'dev-app-zumlo-ai'
+        runOptions: 'inline'
+        inline: |
+          docker pull zumloresgistry.azurecr.io/zumloai-app:$(Build.BuildId)
+          docker stop zumloai-app || true
+          docker rm zumloai-app || true
+          docker run -d --name zumloai-app -p 8080:80 zumloresgistry.azurecr.io/zumloai-app:$(Build.BuildId)
+        readyTimeout: '20000'
+
+    - task: AzureCLI@2
+      displayName: "Remove Agent Public IP from NSG"
+      inputs:
+        azureSubscription: 'Azure subscription 1(1)(c87ac9cb-3d03-49be-8ff1-64a331d3999a)'
+        scriptType: 'pscore'
+        scriptLocation: 'inlineScript'
+        inlineScript: |
+          $agentHostPublicIp = (Invoke-WebRequest -Uri ifconfig.me/ip).Content.Trim()
+          $agentHostPublicIpWithCidr = "$agentHostPublicIp/32"
+          Write-Output "Public IP of agent to remove: $agentHostPublicIpWithCidr"
+          az network nsg rule delete --resource-group $(resourceGroupName) --nsg-name $(networkSecurityGroupName) --name allow-agent-ip

@@ -1,0 +1,139 @@
+AKS Setup 
+
+==================================================================================================================================================================
+az aks create \
+  --resource-group 1-e2ae7751-playground-sandbox \
+  --name stage-aks-demo \
+  --node-count 2 \
+  --enable-cluster-autoscaler \
+  --min-count 2 \
+  --max-count 3 \
+  --ssh-key-value azure-key.pub \
+  --node-vm-size Standard_D2s_v3 \
+  --vnet-subnet-id "/subscriptions/9734ed68-621d-47ed-babd-269110dbacb1/resourceGroups/1-e2ae7751-playground-sandbox/providers/Microsoft.Network/virtualNetworks/stage-demo/subnets/stage-private-subnet"
+  
+==============================================================================================================================================================================
+storage-class.yml
+
+apiVersion: storage.k8s.io/v1
+kind: StorageClass
+metadata:
+  name: azure-disk
+provisioner: kubernetes.io/azure-disk
+parameters:
+  storageaccounttype: Premium_LRS  # Choose between Standard_LRS, Premium_LRS, or StandardSSD_LRS
+  kind: managed  # This is required for managed disks
+
+
+================================================================================================================================================================================
+
+helm upgrade --install loki grafana/loki-stack --set grafana.enabled=true,prometheus.enabled=true,prometheus.alertmanager.persistentVolume.enabled=false,prometheus.server.persistentVolume.enabled=false,loki.persistence.enabled=true,loki.persistence.storageClassName=azure-disk,loki.persistence.size=10Gi
+
+=================================================================================================================================================================================
+
+
+
+az aks get-credentials --resource-group 1-e2ae7751-playground-sandbox --name stage-aks-demo
+
+az aks get-credentials --resource-group stage-aks-isp --name stage-aks-isp
+
+
+
+===========================================================================================================================================================
+
+
+helm install ingress-nginx ingress-nginx/ingress-nginx \
+  --namespace demo-ns \
+  --set controller.service.annotations."service\.beta\.kubernetes\.io/azure-load-balancer-health-probe-request-path"=/healthz
+  
+  
+  
+  
+  
+helm install ingress-nginx ingress-nginx/ingress-nginx \
+  --create-namespace \
+  --namespace ingress-nginx \
+  --set controller.service.annotations."service\.beta\.kubernetes\.io/azure-load-balancer-health-probe-request-path"=/healthz
+  
+============================================================================================================================================================
+
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: demo-ns
+  annotations:
+    nginx.ingress.kubernetes.io/ssl-redirect: "false"
+    nginx.ingress.kubernetes.io/use-regex: "true"
+    nginx.ingress.kubernetes.io/rewrite-target: /
+spec:
+  ingressClassName: nginx
+  rules:
+  - host: phpmyadmin.iteindia.cloud
+    http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: php-admin
+            port:
+              number: 82
+             
+             
+===============================================================================================================================================================
+
+https://learn.microsoft.com/en-us/azure/aks/ingress-basic?tabs=azure-cli
+
+https://github.com/MicrosoftDocs/azure-docs/blob/main/articles/aks/ingress-basic.md
+
+https://prakashkumar0301.medium.com/ingress-controller-in-aks-4b92fb8031f0
+
+===========================================================================================================================================================
+
+kubectl apply -f https://github.com/jetstack/cert-manager/releases/download/v1.7.1/cert-manager.yaml
+
+ helm repo add jetstack https://charts.jetstack.io
+ 
+ helm install cert-manager --namespace cert-manager --version v1.13.2 jetstack/cert-manager
+ 
+  helm install cert-manager jetstack/cert-manager --namespace demo-ns --version v1.13.2 --set installCRDs=true --set nodeSelector."kubernetes\.io/os"=linux
+  
+===========================================================================================================================================================
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: demo-ingress
+  namespace: demo-ns
+  annotations:
+    
+    nginx.ingress.kubernetes.io/rewrite-target: /
+    nginx.ingress.kubernetes.io/use-regex: "true"
+    cert-manager.io/cluster-issuer: letsencrypt-prod  # Specify the ClusterIssuer
+spec: 
+  ingressClassName: nginx
+  tls:
+  - hosts:
+    - phpmyadmin.iteindia.cloud
+    secretName: tls-secret  # Specify the secret to store the TLS certificate
+  rules:
+  - host: phpmyadmin.iteindia.cloud
+    http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: php-admin
+            port:
+              number: 82
+              
+==============================================================================================================================================================
+
+
+ 
+
+
+  
+  
+  
+  

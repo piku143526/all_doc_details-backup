@@ -1,0 +1,101 @@
+name: Docker Image backend-user
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Print IP Address
+        id: get_ip
+        run: echo "::set-output name=server-ip::$(curl -s ifconfig.me)"
+
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v1
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: us-east-1
+
+      - name: Get existing IP address
+        id: existing_ip
+        run: |
+          ip=$(aws ec2 describe-security-groups --group-id sg-02a085aa3c3096d03 --query "SecurityGroups[0].IpPermissions[?Description=='Github-Action-IP'].IpRanges[0].CidrIp" --output text)
+          echo "::set-output name=ip::$ip"
+
+      - name: Remove existing IP if found
+        if: steps.existing_ip.outputs.ip != ''
+        run: |
+          aws ec2 revoke-security-group-ingress --group-id sg-02a085aa3c3096d03 --protocol tcp --port 22 --cidr ${{ steps.existing_ip.outputs.ip }}/32
+
+      - name: Add IP to Security Group
+        run: |
+          ip=${{ steps.get_ip.outputs.server-ip }}
+          aws ec2 authorize-security-group-ingress --group-id sg-02a085aa3c3096d03 --protocol tcp --port 22 --cidr $ip/32
+          aws ec2 update-security-group-rule-descriptions-ingress  --group-id sg-02a085aa3c3096d03 --ip-permissions 'IpProtocol=tcp,FromPort=22,ToPort=22,IpRanges=[{CidrIp='$ip'/32,Description="Github-Action-IP"}]'
+
+      - name: Update IP in Security Group
+        run: |
+          MY_IP=$(curl --silent https://checkip.amazonaws.com)
+          echo "Your IP is ${MY_IP}"
+          pairs=$(aws ec2 describe-security-groups | jq -c '.SecurityGroups[]? | select(.IpPermissions[].IpRanges[].Description == "Github-Action-IP") | {sg: .GroupId, cidr: .IpPermissions[].IpRanges[].CidrIp}')
+          for p in $pairs
+          do
+            SG=$(echo "$p" | jq -r '.sg')
+            OLD_CIDR=$(echo "$p" | jq -r '.cidr')
+            echo "Updating security group ${SG}"
+            if [[ $OLD_CIDR != 'null' && $OLD_CIDR != "${MY_IP}/32" ]]
+            then
+              echo "Revoking ingress permission for ${OLD_CIDR} in security group ${SG}"
+              aws ec2 revoke-security-group-ingress \
+                  --group-id "${SG}" \
+                  --protocol tcp \
+                  --port 22 \
+                  --cidr "${OLD_CIDR}"
+            fi
+            if [[ $OLD_CIDR != "${MY_IP}/32" && $(aws ec2 describe-security-groups --group-id "${SG}" --query "SecurityGroups[0].IpPermissions[?IpRanges[?CidrIp=='${MY_IP}/32']].IpRanges[0].CidrIp" --output text) == "null" ]]
+            then
+              NEW_CIDR="${MY_IP}/32"
+              echo "Authorizing ingress permission for ${NEW_CIDR} in security group ${SG}"
+              aws ec2 authorize-security-group-ingress --group-id "${SG}" --ip-permissions '[{"IpProtocol": "tcp", "FromPort": 22, "ToPort": 22, "IpRanges": [{"CidrIp": "'"${NEW_CIDR}"'", "Description": "Github-Action-IP"}]}]'
+            fi
+          done
+
+      - name: Login to Amazon ECR
+        run: |
+          aws ecr get-login-password --region us-east-1 | docker login --username AWS --password-stdin 277245850696.dkr.ecr.us-east-1.amazonaws.com
+
+      - name: Docker Build
+        run: |
+          docker build -t test-user .
+
+      - name: Docker Tag
+        run: |
+          docker tag test-user:latest 277245850696.dkr.ecr.us-east-1.amazonaws.com/test-user:${{ github.run_id }}
+
+      - name: Docker Push
+        run: |
+          docker push 277245850696.dkr.ecr.us-east-1.amazonaws.com/test-user:${{ github.run_id }}
+
+      - name: SSH into AWS EC2 and run script
+        uses: appleboy/ssh-action@master
+        with:
+          host: ${{ secrets.SSH_HOST }}
+          username: ${{ secrets.SSH_USERNAME }}
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          port: ${{ secrets.SSH_PORT }}
+          script: |
+            cd /home/ec2-user/GithubActions-EC2-Docker
+            docker-compose down
+            export IMAGE_NAME_BACKEND_USER=277245850696.dkr.ecr.us-east-1.amazonaws.com/test-user:${{ github.run_id }}
+            docker-compose up -d

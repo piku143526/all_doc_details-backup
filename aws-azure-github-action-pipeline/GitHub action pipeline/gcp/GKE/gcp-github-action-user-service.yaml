@@ -1,0 +1,50 @@
+name: Docker Image CI users_service
+on:
+  push:
+    branches: 
+      - development
+  pull_request:
+    branches: 
+      - development
+
+env:
+  PROJECT_ID: antier-staging
+  GKE_ZONE: asia-southeast1-a
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    permissions:
+      id-token: write
+      contents: read
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        
+      - id: auth
+        name: Create access_token for docker login
+        uses: google-github-actions/auth@v2
+        with:
+          token_format: "access_token"
+          workload_identity_provider:  projects/473497607321/locations/global/workloadIdentityPools/antier-wif-staging-gaudiy/providers/stage-github-wif-pool
+          service_account: stage-gihub-gcp-resource-acces@antier-staging.iam.gserviceaccount.com
+      - name: Docker Build
+        run: |
+          docker build -t users_service .
+      - name: Login to GCR
+        run: |
+         echo "Y" | gcloud auth configure-docker asia-southeast1-docker.pkg.dev
+      - name: Docker Tag
+        run: |
+          docker tag users_service:latest asia-southeast1-docker.pkg.dev/antier-staging/stage-gaudiy/users_service:${{ github.run_id }}
+
+      - name: Docker Push
+        run: |
+          docker push asia-southeast1-docker.pkg.dev/antier-staging/stage-gaudiy/users_service:${{ github.run_id }}
+      - name: Trigger Workflow B
+        uses: peter-evans/repository-dispatch@v1
+        with:
+          token: ${{ secrets.MY_GITHUB_TOKEN }}
+          repository: priyankagiri-antier/staging-k8s-deployment
+          event-type: trigger-workflow-users-service
+          client-payload: '{"github_run_id": "${{ github.run_id }}", "branch": "main"}'
+      

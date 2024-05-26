@@ -1,0 +1,8 @@
+apiVersion: storage.k8s.io/v1
+kind: StorageClass
+metadata:
+  name: azure-disk
+provisioner: kubernetes.io/azure-disk
+parameters:
+  storageaccounttype: Premium_LRS  # Choose between Standard_LRS, Premium_LRS, or StandardSSD_LRS
+  kind: managed  # This is required for managed disks

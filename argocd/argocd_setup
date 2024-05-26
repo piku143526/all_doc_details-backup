@@ -1,0 +1,122 @@
+Argocd setup :- 
+======================================================================================================================================================================================
+step 1 
+
+create values.yaml
+
+configs:
+  repositories: 
+    env-gitops:
+      url: https://github.com/piku143526/argocd-nginx.git
+      name: env-gitops
+      type: git
+      username: piku143526
+  params:
+    server.insecure: true 
+    server.disable.auth: true
+    
+======================================================================================================================================================================================
+
+helm install --version 5.24.0 --create-namespace -n argocd -f values.yaml --set "configs.repositories.env-gitops.password=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" argocd argo/argo-cd
+
+
+
+or 
+
+helm install argocd argo/argo-cd \
+  --create-namespace \
+  -n argocd \
+  -f values.yaml \
+  --set "configs.repositories.stage-facbank.password=Rajpura@2173"
+  
+======================================================================================================================================================================================
+
+
+create a applications
+
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: argocd-root
+  namespace: argocd
+spec:
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: demo-ns
+  source:
+    repoURL: https://github.com/piku143526/argocd.git
+    path: argocd-apps/
+    targetRevision: HEAD
+  project: default
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+      
+================================================================================================
+
+app-of-apps.yaml
+
+
+
+apiVersion: argoproj.io/v1alpha1
+kind: ApplicationSet
+metadata:
+  name: app-set
+  namespace: argocd
+spec:
+  generators:
+  - list:
+      elements:
+      - AppName: phpmyadmin
+        namespace: argocd
+        directory: phpmyadmin
+      - AppName: rabbitmq
+        namespace: argocd
+        directory: rabbitmq  
+  template:
+    metadata:
+      name: "{{AppName}}"
+      annotations:
+        argocd.argoproj.io/manifest-genarate-paths: ".;.."
+    spec:
+      project: default
+      source:
+        repoURL: https://github.com/piku143526/argocd.git
+        targetRevision: HEAD
+        path: apps/{{directory}}
+      destination:
+        server: https://kubernetes.default.svc
+        namespace: demo-ns
+      syncPolicy:
+        syncOptions:
+          - CreateNamespace=true
+          - ApplyOutOfSyncOnly=true
+          - PruneLast=true
+        automated:
+          prune: true
+          selfHeal: true
+
+      
+      
+======================================================================
+
+
+kubectl -n argocd get secret argocd-initial-admin-secret -o jsonpath="{.data.password}" | base64 -d
+
+=====================================================================================================
+
+
+helm uninstall -n argocd argocd
+
+9CWqcs3iisOgByO1
+
+helm install --version 5.24.0 --create-namespace -n argocd-new -f values.yaml --set "configs.repositories.env-gitops.password=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" argocd argo/argo-cd
+
+
+
+
+
+
+iyKbLRt0EfTqUdLD
+
