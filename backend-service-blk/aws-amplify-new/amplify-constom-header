@@ -1,0 +1,32 @@
+customHeaders:
+  - pattern: '**'
+    headers:
+      - key: Strict-Transport-Security
+        value: max-age=31536000; includeSubDomains; preload
+      - key: X-Frame-Options
+        value: SAMEORIGIN
+      - key: X-XSS-Protection
+        value: 1; mode=block
+      - key: X-Content-Type-Options
+        value: nosniff
+      - key: Referrer-Policy
+        value: strict-origin-when-cross-origin
+      - key: Permissions-Policy
+        value: >-
+          geolocation=*, midi=(), sync-xhr=(), accelerometer=(), gyroscope=(),
+          magnetometer=(), payment=(), camera=(), microphone=(), usb=(),
+          fullscreen=(self)
+      - key: Access-Control-Allow-Headers
+        value: >-
+          Origin,  X-Requested-With,  Content-Type,  Accept,  Authorization,
+          api-access-token,  ip,  location,  application/json,  text/plain,  /
+      - key: Access-Control-Allow-Origin
+        value: >-
+          https://www.ausfinex.com, https://api.ipdata.co/,
+          https://api.ausfinex.com,  https://kyc.ausfinex.com,
+          https://test-admin.ausfinex.com,  https://cdnjs.cloudflare.com,
+          https://cdn.jsdelivr.net,  https://static.cloudflareinsights.com,
+          https://main-graph.ausfinex.com,  https://blog.ausfinex.com,
+          https://ekr.zdassets.com,  https://socket-api.ausfinex.com
+      - key: Access-Control-Allow-Methods
+        value: 'POST, GET, DELETE, PUT'
