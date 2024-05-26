@@ -1,0 +1,60 @@
+STBL Backend service ECR repo 
+
+admin-service  ---------> 497432915557.dkr.ecr.ap-south-1.amazonaws.com/admin
+email-service ----------> 497432915557.dkr.ecr.ap-south-1.amazonaws.com/email
+users-service ----------> 497432915557.dkr.ecr.ap-south-1.amazonaws.com/users
+socket-service  --------> 497432915557.dkr.ecr.ap-south-1.amazonaws.com/socket
+wallet-main     --------> 497432915557.dkr.ecr.ap-south-1.amazonaws.com/wallet-main
+
+
+
+docker-compose stop admin-service
+docker system prune -a -f
+aws ecr get-login-password --region ap-south-1 | docker login --username AWS --password-stdin 497432915557.dkr.ecr.ap-south-1.amazonaws.com
+docker rm -f  497432915557.dkr.ecr.ap-south-1.amazonaws.com/admin:latest
+docker-compose pull admin-service
+docker-compose up -d admin-service
+echo "Pipeline finished"
+
+
+
+docker-compose stop email-service
+docker system prune -a -f
+aws ecr get-login-password --region ap-south-1 | docker login --username AWS --password-stdin 497432915557.dkr.ecr.ap-south-1.amazonaws.com
+docker rm -f  497432915557.dkr.ecr.ap-south-1.amazonaws.com/email:latest
+docker-compose pull email-service
+docker-compose up -d email-service
+echo "Pipeline finished"
+
+
+docker-compose stop users-service
+docker system prune -a -f
+aws ecr get-login-password --region ap-south-1 | docker login --username AWS --password-stdin 497432915557.dkr.ecr.ap-south-1.amazonaws.com
+docker rm -f  497432915557.dkr.ecr.ap-south-1.amazonaws.com/users:latest
+docker-compose pull users-service
+docker-compose up -d users-service
+echo "Pipeline finished"
+
+
+
+docker-compose stop socket-service
+docker system prune -a -f
+aws ecr get-login-password --region ap-south-1 | docker login --username AWS --password-stdin 497432915557.dkr.ecr.ap-south-1.amazonaws.com
+docker rm -f   497432915557.dkr.ecr.ap-south-1.amazonaws.com/socket:latest
+docker-compose pull socket-service
+docker-compose up -d socket-service
+echo "Pipeline finished"
+
+docker-compose stop wallet-main 
+docker system prune -a -f
+aws ecr get-login-password --region ap-south-1 | docker login --username AWS --password-stdin 497432915557.dkr.ecr.ap-south-1.amazonaws.com
+docker rm -f   497432915557.dkr.ecr.ap-south-1.amazonaws.com/wallet-main:latest
+docker-compose pull wallet-main 
+docker-compose up -d wallet-main 
+echo "Pipeline finished"
+
+
+
+
+
+

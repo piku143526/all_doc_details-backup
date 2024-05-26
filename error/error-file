@@ -1,0 +1,217 @@
+==========================================================================================================
+
+######Mysql port binding on ubuntu#######
+ sudo vim /etc/mysql/mysql.conf.d/mysqld.cnf 
+
+bind-address            = 0.0.0.0
+mysqlx-bind-address     = 0.0.0.0
+
+==========================================================================================================
+
+###port check #####
+netstat -tulpn 
+
+sudo netstat -tulpn
+
+ ss -lnt
+ 
+  du -sh *
+
+==========================================================================================================
+
+#### connection check ###
+ telnet 10.1.15.0 3306
+example  telnet <privete ip>  <port no>
+
+==========================================================================================================
+
+##########check port no ######
+netstat -lnpt | grep :80	
+
+==========================================================================================================
+
+#####nginx Error########
+
+error code 413 :- request entity is larger than limits defined by server
+
+Go to server 
+
+vim /etc/nginx/nginx.conf
+
+client_max_body_size 500M;
+client_body_buffer_size 500M;
+
+===========================================================================================================
+
+CREATE USER 'devantier'@'%' IDENTIFIED BY 'b8Ph@W5dVdf';
+
+
+GRANT ALL PRIVILEGES ON . TO 'devantier'@'%'; 
+
+===========================================================================================================================================================
+
+Rds error:- mysqli::real_connect(): (HY000/1129): Host '172.31.1.66' is blocked because of many connection errors; unblock with 'mysqladmin flush-hosts'
+
+mysqladmin -h <RDS_ENDPOINT_URL> -P <PORT> -u <USER> -p flush-hosts
+ 
+mysql -h  stage-rds-indxcoin.cyr1pkrvo7vx.us-west-1.rds.amazonaws.com -P 3306 -u admin -p
+
+MySQL [(none)]> FLUSH HOSTS;
+
+mysql -h  stage-exchange-coingeb.cocvzjz2j85q.eu-central-1.rds.amazonaws.com -P 3306 -u admin -p
+
+unzip ------> tar -I lz4 -xvf geth.tar.gz  -C /data2
+
+==============================================================================================================================================================================
+
+Error:- not authorized on swapperly-bridge to execute command { dropDatabase: 1, lsid: { id: UUID("6b535bee-d0a0-4c28-98fe-e16881d78b42") }, $db: "swapperly-bridge" }
+
+solution :- use admin;
+db.grantRolesToUser("adminUser", ["root"]);
+
+
+Docker image delete  ------------> docker image prune -a
+Docker cpu & memory check --------> docker stats 
+
+docker system prune -a
+
+
+===============================================================================================================================================================================
+
+how to generate pem key (pub key & priv key)
+
+step 1: generate public & private key:-
+
+ssh-keygen 
+
+navigate to cd .ssh 
+
+step 2: create pem file
+
+cat id_rsa id_rsa.pub > mykey.pem (as of now my file name is mykey.pem)
+
+============================================================================================================================================================================
+
+Error :- Error: ER_NOT_SUPPORTED_AUTH_MODE: Client does not support authentication protocol requested by server; consider upgrading MySQL client
+
+ALTER USER kajal_atr537 IDENTIFIED WITH mysql_native_password BY 'Z5XuXXC3x9S4RDad';
+
+flush privileges;
+
+
+===========================================================================================================================================================================
+
+Increase server load 
+
+cat /dev/zero > /dev/null
+====================================================================================================================================================================
+
+History with time or date 
+
+   HISTTIMEFORMAT="%d/%m/%y/%T "
+   
+======================================================================================================================================================================
+
+Video conveter 
+
+ffmpeg -i Ec2\ instance\ lunch.webm  Ec2-instance-setup.mp4
+
+==================================================================================================================================================================
+
+cotainer logs remove 
+
+sudo sh -c "truncate -s 0 /var/lib/docker/containers/*/*-json.log"
+
+====================================================================================================================================================================
+
+
+Mysql error :- 
+
+
+SHOW VARIABLES LIKE 'innodb_lock_wait_timeout';
+SET innodb_lock_wait_timeout = 600;
+
+===================================================================================================================================================================
+
+Digital ocean  mysql error 
+
+change parameter on digitalocean 
+
+1. create DIGITALOCEAN_TOKEN 
+
+2. find DB UUID ---> Install  apt  install jq  -y 
+
+=========================================================================================================
+
+curl -X GET \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer dop_v1_d7c85ef6796dabfe37a7ed2e1f8c5ee62c2bbf75150871c02d909e1ff3372855" \
+  "https://api.digitalocean.com/v2/databases" | jq -r '.databases[] | select(.name == "testnet-mysql-crypfi") | .id'
+
+======================================================================================================================
+
+curl -X GET \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer dop_v1_d7c85ef6796dabfe37a7ed2e1f8c5ee62c2bbf75150871c02d909e1ff3372855" \
+  "https://api.digitalocean.com/v2/databases"
+
+==========================================================================================================
+
+curl -X PATCH \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer $DIGITALOCEAN_TOKEN" \
+  -d '{"config": {"slow_query_log": true}}' \
+  "https://api.digitalocean.com/v2/databases/YOUR_DB_UUID/config" 
+  
+  ========================================================================================================
+  
+  curl -X PATCH \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer dop_v1_d7c85ef6796dabfe37a7ed2e1f8c5ee62c2bbf75150871c02d909e1ff3372855" \
+  -d '{"config": {"slow_query_log": true}}' \
+  "https://api.digitalocean.com/v2/databases/3e6449d5-92eb-43de-95d0-f8dd882c1e4d/config" 
+  
+===========================================================================================================
+
+renew   certbot
+
+
+sudo certbot renew --force-renewal
+
+===========================================================================================================
+
+cron job 
+
+crontab -e
+
+#*/1 * * * * sudo certbot renew --force-renewal >> backup.log  2>&1 
+
+# Run Certbot renewal with force and log the output to a file
+0 0 1 */2 *    sudo certbot renew --force-renewal >> certbot.log 2>&1
+
+=========================================================================================================
+
+crontab -l 
+
+check logs 
+
+tail -f /var/log/syslog | grep CRON
+
+ps aux | grep certbot
+
+sudo pkill -f certbot
+
+
+last used 
+
+sudo rm /var/lib/letsencrypt/lock
+
+
+
+==========================================================================================================
+
+  
+
+
+
+

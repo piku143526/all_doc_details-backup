@@ -1,0 +1,26 @@
+cd /home/$USER/prod-frontend
+
+# Stop the running containers
+docker-compose stop prod-frontend
+
+# Prune unused Docker data
+docker system prune -a -f
+
+# Log in to AWS ECR
+aws ecr get-login-password --region ap-south-1 | docker login --username AWS --password-stdin 882805916493.dkr.ecr.ap-south-1.amazonaws.com
+
+# Remove the existing container
+docker rm -f prod-frontend
+
+# Pull the latest changes in the prod-frontend service
+docker-compose pull prod-frontend
+
+# Build the service without using any cache
+docker-compose build --no-cache prod-frontend
+
+# Recreate and start the container
+docker-compose up -d prod-frontend
+
+echo "Pipeline finished"
+
+
