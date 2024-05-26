@@ -1,0 +1,217 @@
+Role-based access control (RBAC)
+
+=====================================================================
+
+Create policy :-
+
+Name :- AmazonEKSViewNodesAndWorkloadsPolicy
+
+=====================================================================
+
+{
+    "Version": "2012-10-17",
+    "Statement": [
+        {
+            "Effect": "Allow",
+            "Action": [
+                "eks:DescribeNodegroup",
+                "eks:ListNodegroups",
+                "eks:DescribeCluster",
+                "eks:ListClusters",
+                "eks:AccessKubernetesApi",
+                "ssm:GetParameter",
+                "eks:ListUpdates",
+                "eks:ListFargateProfiles"
+            ],
+            "Resource": "*"
+        }
+    ]
+}
+
+======================================================================
+kubectl edit -n kube-system configmap/aws-auth 
+
+mapUsers: |
+    - userarn: arn:aws:iam::063544445412:user/piku
+      username: piku
+      groups:
+      - reader
+======================================================================  
+
+full access 
+
+{
+    "Version": "2012-10-17",
+    "Statement": [
+        {
+            "Effect": "Allow",
+            "Action": [
+                "eks:DescribeNodegroup",
+                "eks:ListNodegroups",
+                "eks:DescribeCluster",
+                "eks:ListClusters",
+                "eks:AccessKubernetesApi",
+                "eks:ListUpdates",
+                "eks:ListFargateProfiles",
+                "eks:CreateCluster",
+                "eks:UpdateClusterConfig",
+                "eks:DeleteCluster",
+                "eks:CreateNodegroup",
+                "eks:UpdateNodegroupConfig",
+                "eks:DeleteNodegroup",
+                "eks:DescribeFargateProfile",
+                "eks:CreateFargateProfile",
+                "eks:DeleteFargateProfile",
+                "ssm:GetParameter",
+                "ssm:GetParameters",
+                "ssm:GetParameterHistory",
+                "ssm:GetParametersByPath",
+                "ssm:PutParameter",
+                "ssm:DeleteParameter",
+                "ssm:DeleteParameters"
+            ],
+            "Resource": "*"
+        }
+    ]
+}
+
+===================================================================================================
+
+{
+    "Version": "2012-10-17",
+    "Statement": [
+        {
+            "Effect": "Allow",
+            "Action": "*",
+            "Resource": "*"
+        }
+    ]
+}
+
+==================================================================================================
+
+
+
+
+mapUsers: |
+    - userarn: arn:aws:iam::275073832230:user/aws-fcbank-satnam-atr034
+      username: aaws-fcbank-satnam-atr034
+      groups:
+      - system:masters
+      
+=================================================================================================== 
+
+2nd method 
+
+
+
+for large number for user 
+
+
+first create policy 
+
+Name :- AmazonEKSAdminPolicy
+
+======================================================================================================
+{
+    "Version": "2012-10-17",
+    "Statement": [
+        {
+            "Effect": "Allow",
+            "Action": [
+                "eks:*"
+            ],
+            "Resource": "*"
+        },
+        {
+            "Effect": "Allow",
+            "Action": "iam:PassRole",
+            "Resource": "*",
+            "Condition": {
+                "StringEquals": {
+                    "iam:PassedToService": "eks.amazonaws.com"
+                }
+            }
+        }
+    ]
+}
+
+=======================================================================================================
+
+2nd create role 
+
+Then, create eks-admin IAM role and attach AmazonEKSAdminPolicy 
+
+Role name  eks-admin
+
+
+aws iam get-role --role-name eks-admin 
+
+
+#############For any user that wants to use eks-admin IAM role, we need to create an additional AmazonEKSAssumeEKSAdminPolicy policy, that allows to assume the role #####################
+
+
+add one policy 
+
+name :-  AmazonEKSAssumeEKSAdminPolicy
+
+
+
+{
+    "Version": "2012-10-17",
+    "Statement": [
+        {
+            "Effect": "Allow",
+            "Action": [
+                "sts:AssumeRole"
+            ],
+            "Resource": "arn:aws:iam::542664341044:role/eks-admin"
+        }
+    ]
+}
+
+===========================================================================================
+
+add policy for user -------------->  AmazonEKSAssumeEKSAdminPolicy
+============================================================================================
+
+kubectl edit -n kube-system configmap/aws-auth 
+
+
+  mapRoles: |
+    - rolearn: arn:aws:iam::542664341044:role/eks-admin
+      username: eks-admin
+      groups:
+      - system:masters
+      
+===============================================================================================
+
+kubectl auth can-i "*" "*"
+kubectl auth can-i get pods
+kubectl auth can-i create  pods
+
+===============================================================================================
+
+link :- https://antonputra.com/kubernetes/add-iam-user-and-iam-role-to-eks/#add-iam-role-to-eks-cluster
+
+=====================================================================================================
+sudo vim config 
+
+
+[default]
+[profile devops_pradeep_atr973_moneybridge]
+[profile eks-admin]
+region = ap-south-1
+role_arn = arn:aws:iam::542664341044:role/eks-admin
+source_profile = devops_pradeep_atr973_moneybridge
+
+
+======================================================================================================
+
+sudo vim credentials 
+
+[devops_pradeep_atr973_moneybridge]
+aws_access_key_id = 2OE6XMM7V
+aws_secret_access_key = 72BimVeIQL54PslF89o
+
+=================================================================================================

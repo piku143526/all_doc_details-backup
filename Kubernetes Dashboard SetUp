@@ -1,0 +1,56 @@
+=============================================================================================================
+Kubernetes Dashboard SetUp 
+
+=============================================================================================================
+
+
+
+Link :- https://komodor.com/learn/kubernetes-dashboard/
+==============================================================================================================
+
+kubectl apply -f https://raw.githubusercontent.com/kubernetes/dashboard/v2.6.1/aio/deploy/recommended.yaml
+
+
+ kubectl get all -n kubernetes-dashboard
+ 
+ 
+ ================================================================================================================
+ 
+ apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: demo-cluster-admin
+rules:
+- apiGroups: ["*"]
+  resources: ["*"]
+  verbs: ["*"]
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: demo-user-admin
+  namespace: kubernetes-dashboard
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: demo-user-admin
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: demo-cluster-admin
+subjects:
+- kind: ServiceAccount
+  name: demo-user-admin
+  namespace: kubernetes-dashboard
+
+
+==========================================================================================================
+
+Create Token 
+
+
+kubectl -n kubernetes-dashboard create token demo-user-admin
+
+
+========================================================================================================
