@@ -1,0 +1,59 @@
+#!/bin/bash
+
+# Step 1: Create VPC
+gcloud compute networks create stage-demo-vpc \
+  --project=playground-s-11-66b712c0 \
+  --description=stage-demo-vpc \
+  --subnet-mode=custom \
+  --mtu=1460 \
+  --bgp-routing-mode=regional
+
+gcloud compute networks subnets create stage-public-subnet \
+  --project=playground-s-11-66b712c0 \
+  --description=stage-public-subnet \
+  --range=10.0.1.0/24 \
+  --stack-type=IPV4_ONLY \
+  --network=stage-demo-vpc \
+  --region=us-east1
+
+gcloud compute networks subnets create stage-private-subnet \
+  --project=playground-s-11-66b712c0 \
+  --description=stage-private-subnet \
+  --range=10.0.50.0/24 \
+  --stack-type=IPV4_ONLY \
+  --network=stage-demo-vpc \
+  --region=us-east1
+
+gcloud compute firewall-rules create stage-demo-vpc-allow-custom \
+  --project=playground-s-11-66b712c0 \
+  --network=projects/playground-s-11-66b712c0/global/networks/stage-demo-vpc \
+  --description="Allows connection from any source to any instance on the network using custom protocols." \
+  --direction=INGRESS \
+  --priority=65534 \
+  --source-ranges=10.0.1.0/24,10.0.50.0/24 \
+  --action=ALLOW \
+  --rules=all
+
+gcloud compute firewall-rules create stage-demo-vpc-allow-icmp \
+  --project=playground-s-11-66b712c0 \
+  --network=projects/playground-s-11-66b712c0/global/networks/stage-demo-vpc \
+  --description="Allows ICMP connections from any source to any instance on the network." \
+  --direction=INGRESS \
+  --priority=65534 \
+  --source-ranges=0.0.0.0/0 \
+  --action=ALLOW \
+  --rules=icmp
+
+# Step 2: Create Static IP address (Reserve a static address)
+gcloud compute addresses create stage-demo-ip \
+  --project=playground-s-11-66b712c0 \
+  --description="Reserve a static address" \
+  --region=us-east1
+
+# Step 3: Create Cloud Router
+gcloud compute routers create stage-demo-router \
+  --project=playground-s-11-66b712c0 \
+  --description=stage-demo-router \
+  --region=us-east1 \
+  --network=stage-demo-vpc
+# create cloud nat

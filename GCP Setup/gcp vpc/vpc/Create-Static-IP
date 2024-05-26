@@ -1,0 +1,7 @@
+# Create Static IP address (Reserve a static address)
+
+gcloud compute addresses create stage-demo-ip \
+  --project=playground-s-11-66b712c0 \
+  --description="Reserve a static address" \
+  --region=us-east1
+

@@ -1,0 +1,47 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: gateway
+  labels:
+    app: gateway
+  namespace: fcbank-ns
+spec:
+  selector:
+    matchLabels:
+      app: gateway
+  template:
+    metadata:
+      labels:
+        app: gateway
+    spec:
+      serviceAccountName: default
+      containers:
+        - name: gateway
+          image: envoyproxy/envoy:v1.10.0
+          command: ["/usr/local/bin/envoy","-l","debug","-c"]
+          args:
+            - /etc/envoy/envoy.yaml
+          imagePullPolicy: IfNotPresent
+          env:
+            - name: "ENVOY_LB_ALG"
+              value: "LEAST_REQUEST"
+            - name: "SERVICE_NAME"
+              value: "envoy"
+          ports:
+            - name: http
+              containerPort: 8099
+            - name: envoy-admin
+              containerPort: 9901
+          volumeMounts:
+            - mountPath: /etc/envoy/
+              name: envoy-config
+          resources:
+            limits:
+              cpu: 500m
+            requests:
+              cpu: 200m
+      volumes:
+        - name: envoy-config
+          configMap:
+            name: envoy-config
+      restartPolicy: Always

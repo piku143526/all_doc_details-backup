@@ -1,0 +1,115 @@
+# Set the Google Cloud project ID
+gcloud config set project "playground-s-11-66b712c0"
+
+# Create a GKE cluster named "stage-demo-cluster"
+gcloud beta container clusters create "stage-demo-cluster" \
+
+# Disable basic authentication
+--no-enable-basic-auth \
+
+# Specify the Kubernetes version
+--cluster-version "1.27.3-gke.100" \
+
+# Use the "regular" release channel
+--release-channel "regular" \
+
+# Set the machine type for the nodes
+--machine-type "e2-medium" \
+
+# Use Ubuntu with containerd as the image type
+--image-type "UBUNTU_CONTAINERD" \
+
+# Specify the disk type and size for the nodes
+--disk-type "pd-balanced" \
+--disk-size "50" \
+
+# Disable legacy endpoints
+--metadata disable-legacy-endpoints=true \
+
+# Set OAuth2 scopes for the nodes
+--scopes "https://www.googleapis.com/auth/devstorage.read_only","https://www.googleapis.com/auth/logging.write","https://www.googleapis.com/auth/monitoring","https://www.googleapis.com/auth/servicecontrol","https://www.googleapis.com/auth/service.management.readonly","https://www.googleapis.com/auth/trace.append" \
+
+# Set the number of nodes in the node pool
+--num-nodes "2" \
+
+# Configure logging for the cluster
+--logging=SYSTEM,WORKLOAD \
+
+# Configure monitoring for the cluster
+--monitoring=SYSTEM \
+
+# Enable private nodes
+--enable-private-nodes \
+
+# Set the CIDR range for the master's private IP
+--master-ipv4-cidr "172.16.0.0/28" \
+
+# Enable global access for the master
+--enable-master-global-access \
+
+# Enable IP alias for the nodes
+--enable-ip-alias \
+
+# Specify the network and subnetwork for the cluster
+--network "projects/playground-s-11-66b712c0/global/networks/stage-demo-vpc" \
+--subnetwork "projects/playground-s-11-66b712c0/regions/us-east1/subnetworks/stage-private-subnet" \
+
+# Disable intra-node visibility
+--no-enable-intra-node-visibility \
+
+# Set the default maximum number of pods per node
+--default-max-pods-per-node "110" \
+
+# Set the security posture for the cluster
+--security-posture=standard \
+
+# Disable workload vulnerability scanning
+--workload-vulnerability-scanning=disabled \
+
+# Disable master authorized networks
+--no-enable-master-authorized-networks \
+
+# Specify additional add-ons for the cluster
+--addons HorizontalPodAutoscaling,HttpLoadBalancing,GcePersistentDiskCsiDriver \
+
+# Enable automatic upgrade and repair for the nodes
+--enable-autoupgrade \
+--enable-autorepair \
+
+# Specify the maximum number of nodes that can be simultaneously upgraded
+--max-surge-upgrade 1 \
+
+# Specify the maximum number of unavailable nodes during upgrades
+--max-unavailable-upgrade 0 \
+
+# Disable binary authorization
+--binauthz-evaluation-mode=DISABLED \
+
+# Enable node auto-provisioning
+--enable-autoprovisioning \
+
+# Specify CPU and memory settings for auto-provisioned nodes
+--min-cpu 2 \
+--max-cpu 8 \
+--min-memory 4 \
+--max-memory 16 \
+
+# Specify the location for auto-provisioned nodes
+--autoprovisioning-locations=us-east1-b \
+
+# Enable auto-upgrade and auto-repair for auto-provisioned nodes
+--enable-autoprovisioning-autorepair \
+--enable-autoprovisioning-autoupgrade \
+
+# Enable managed Prometheus for monitoring
+--enable-managed-prometheus \
+
+# Enable vertical pod autoscaling
+--enable-vertical-pod-autoscaling \
+
+# Enable Shielded Nodes
+--enable-shielded-nodes \
+
+# Specify the locations for the nodes
+--node-locations "us-east1-b"
+

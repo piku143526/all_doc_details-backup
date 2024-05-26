@@ -1,0 +1,10 @@
+# create cloud router
+
+gcloud compute routers create stage-demo-router \
+  --project=playground-s-11-66b712c0 \
+  --description=stage-demo-router \
+  --region=us-east1 \
+  --network=stage-demo-vpc
+
+
+# Step  4 create Cloud nat through gui
